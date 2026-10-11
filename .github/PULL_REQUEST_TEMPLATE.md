@@ -21,8 +21,13 @@ Details: https://github.com/irsdl/webhacklist/blob/master/CONTRIBUTING.md
 
 - [ ] No generated file is edited by hand — `website/data/**`, `archived-references/document-gaps.md`, `archived-references/store-gaps.md`
 - [ ] If year-list or archive data changed: `node website/build-data.mjs` and `node website/build-data.mjs --check` passed; generated `website/data/` stayed out of the commit
-- [ ] If anything under `website/` changed: `node website/smoke-test.mjs` passes
+- [ ] If collection records changed: README rows, totals and preliminary counts pass `node website/readme-counts-test.mjs`
+- [ ] If anything under `website/` changed: the archive/link smoke suite passes through the [isolated container runner](../website/README.md#run-it)
 - [ ] If website themes, navigation, popups or readers changed: the [website regression suite](../website/README.md#regression-coverage-for-future-website-changes) passes, with regression coverage for any new bug fix
+
+Automated agents generate data and inspect archived content through the approved
+offline Docker sandbox described in the website guide. Publication also requires
+the crawlable-page checks and both host staging targets.
 
 ## Sources
 
