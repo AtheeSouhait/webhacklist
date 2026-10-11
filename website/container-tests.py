@@ -119,7 +119,9 @@ def main():
             display = ["-e", "WEBSEC_TEST_HEADED=1"] if browser == "webkit" else []
             invocation = command + display + ["-e", "WEBSEC_TEST_BROWSER=" + browser, "--workdir", "/work",
                                     image, "python3", "-I", "-c", BOOTSTRAP]
-            result = toolbox._run_container(invocation, timeout=900)
+            # The full theme/dialog/history matrix can exceed 15 minutes in
+            # WebKit. Keep a bounded 30-minute allowance per browser.
+            result = toolbox._run_container(invocation, timeout=1800)
             sys.stdout.write(result.stdout.decode("utf-8", "replace"))
             sys.stderr.write(result.stderr.decode("utf-8", "replace"))
             sys.stdout.flush()

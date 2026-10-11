@@ -166,6 +166,7 @@ Add `--debug` for browser-process and per-layout diagnostics. Each container has
 256 MB of shared memory for composited layers, within its 2 GB memory limit.
 WebKit uses its GTK backend in an isolated Xvfb display to avoid WPE headless
 animation-frame stalls during repeated viewport changes; no host display is mounted.
+Each browser has a bounded 30-minute execution allowance for the complete matrix.
 
 Both runners mount staged
 public website/test files, published archive files and those three dependency
