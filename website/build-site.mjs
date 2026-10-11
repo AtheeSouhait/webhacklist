@@ -10,6 +10,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { buildPages } from "./build-pages.mjs";
+import { pdfjsReleaseFiles } from "./pdfjs-release-build.mjs";
 
 const APP_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.dirname(APP_DIR);
@@ -33,6 +34,7 @@ const STATIC_FILES = [
   "pdf-reader-polyfills.mjs",
   "pdf-reader-url.mjs",
   "pdf-worker.mjs",
+  "pdfjs-release.mjs",
   "robots.txt",
   "site.webmanifest",
   "social-preview.png",
@@ -40,7 +42,7 @@ const STATIC_FILES = [
 ];
 // sitemap.xml is deliberately absent above: build-pages.mjs generates it along
 // with the crawlable pages it indexes, so the two can never disagree.
-const PDF_READER_FILES = ["pdf-reader.css", "pdf-reader.html", "pdf-reader.mjs", "pdf-reader-polyfills.mjs", "pdf-reader-url.mjs", "pdf-worker.mjs"];
+const PDF_READER_FILES = ["pdf-reader.css", "pdf-reader.html", "pdf-reader.mjs", "pdf-reader-polyfills.mjs", "pdf-reader-url.mjs", "pdf-worker.mjs", "pdfjs-release.mjs"];
 const STATIC_DIRECTORIES = ["vendor/pdfjs"];
 const GITHUB_INDEX = `<!doctype html>
 <html lang="en">
@@ -157,6 +159,7 @@ async function listFiles(directory, prefix = "") {
 
 async function main() {
   const { target, output } = parseArguments();
+  const release = await pdfjsReleaseFiles();
   const [catalogue, manifest] = await Promise.all([
     readJson(path.join(APP_DIR, "data", "catalogue.json")),
     readJson(path.join(REPO, "archived-references", "manifest.json"))
@@ -244,6 +247,13 @@ async function main() {
   const skippedFaults = [];
   let totalBytes = 0;
   let fileCount = 0;
+  for (const [name, body] of release.files) {
+    const destination = path.join(output, release.releasePath, name);
+    await fs.mkdir(path.dirname(destination), { recursive: true });
+    await fs.writeFile(destination, body);
+    totalBytes += body.length;
+    fileCount++;
+  }
   if (target === "github") {
     for (const [relative, body] of [["index.html", GITHUB_INDEX], ["robots.txt", GITHUB_ROBOTS]]) {
       await fs.writeFile(path.join(output, relative), body, "utf8");

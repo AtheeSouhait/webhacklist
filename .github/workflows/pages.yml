@@ -52,6 +52,7 @@ jobs:
           node --test website/constellation-test.mjs
           node --test website/review-regression-test.mjs
           node --test website/pdf-reader-polyfills-test.mjs
+          node --test website/pdfjs-release-test.mjs
           node --check website/build-data.mjs
           node --check website/build-pages.mjs
           node --check website/build-site.mjs

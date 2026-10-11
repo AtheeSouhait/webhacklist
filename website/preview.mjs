@@ -5,6 +5,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readFile, stat } from "node:fs/promises";
 import { createReadStream } from "node:fs";
+import { pdfjsReleaseFiles } from "./pdfjs-release-build.mjs";
+
+const release = await pdfjsReleaseFiles();
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const port = Number(process.env.WEBSEC_PREVIEW_PORT || 4173);
@@ -13,7 +16,7 @@ if (![port, readerPort].every((value) => Number.isInteger(value) && value >= 102
 const origin = `http://127.0.0.1:${port}`;
 const readerOrigin = `http://127.0.0.1:${readerPort}`;
 const appAssets = new Set(["index.html", "404.html", "app.js", "discovery.js", "constellation.js", "styles.css", "discovery.css", "brand-mark.svg", "social-preview.png", "site.webmanifest", "archive-years.json"]);
-const readerAssets = new Set(["pdf-reader.html", "pdf-reader.css", "pdf-reader.mjs", "pdf-reader-polyfills.mjs", "pdf-reader-url.mjs", "pdf-worker.mjs"]);
+const readerAssets = new Set(["pdf-reader.html", "pdf-reader.css", "pdf-reader.mjs", "pdf-reader-polyfills.mjs", "pdf-reader-url.mjs", "pdf-worker.mjs", "pdfjs-release.mjs"]);
 const mime = { ".html":"text/html; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".mjs":"text/javascript; charset=utf-8", ".css":"text/css; charset=utf-8", ".json":"application/json", ".webmanifest":"application/manifest+json", ".svg":"image/svg+xml", ".pdf":"application/pdf", ".md":"text/plain; charset=utf-8", ".png":"image/png", ".wasm":"application/wasm", ".ttf":"font/ttf" };
 const servers = [];
 
@@ -40,6 +43,14 @@ for (const reader of [false, true]) {
     try {
       if (!["GET", "HEAD", "OPTIONS"].includes(request.method)) { response.writeHead(405).end(); return; }
       const requested = new URL(request.url, reader ? readerOrigin : origin);
+      const relative = requested.pathname.replace(/^\/(?:website\/|webhacklist\/)?/, "");
+      if (reader && relative.startsWith(release.releasePath + "/")) {
+        const body = release.files.get(relative.slice(release.releasePath.length + 1));
+        if (!body) { response.writeHead(404).end("Not found"); return; }
+        response.writeHead(200, { "content-type": mime[path.extname(relative)] || "application/octet-stream", "cache-control": "public, max-age=31536000, immutable", "x-content-type-options": "nosniff" });
+        response.end(request.method === "HEAD" ? undefined : body);
+        return;
+      }
       const file = fileFor(requested.pathname, reader);
       if (!file) { response.writeHead(404).end("Not found"); return; }
       const info = await stat(file);

@@ -12,13 +12,19 @@ decoders used by the archive's custom reader are retained from the official
 distribution. The generic viewer and source maps are intentionally omitted.
 
 The display module, worker, cmaps, standard fonts and WASM decoders are one
-release. Update them together and test both staged hosting targets. These are
-fixed URLs, so Cloudflare's `_headers` requires revalidation rather than immutable
-caching. The active custom reader is on `https://irsdl.github.io/webhacklist/`,
-where GitHub Pages controls response headers; `_headers` cannot change them.
-Observed on 11 October 2026: GitHub reader/vendor responses advertised
-`max-age=600`, while the then-live Cloudflare vendor responses advertised
-`max-age=31536000, immutable`. A fresh header policy cannot invalidate copies
-already cached with the old lifetime. Before closing the cache finding, deploy
-and test a warmed browser across a vendor release; a versioned vendor directory
-remains the stronger option for coordinating components on both origins.
+release. Both hosts stage these bytes and the worker wrapper/polyfills under
+`vendor/pdfjs/releases/<sha256>/`. The reader resolves every component from that
+one root, so old immutable fixed-path caches cannot mix into a new release.
+The build validates the root against all payload bytes and licences. After any
+dependency, wrapper or polyfill change, run
+`node website/pdfjs-release-build.mjs --print-path`, update `PDFJS_RELEASE_PATH`
+in `website/pdfjs-release.mjs`, and test both staged hosting targets and the
+warmed-cache regression. Never change bytes under an existing release hash.
+
+Legacy fixed paths are retained for the migration and revalidate on Cloudflare.
+Cloudflare's `_headers` cannot control GitHub Pages response headers. GitHub's
+ten-minute reader/manifest cache can delay switching releases; whichever root a
+reader receives still identifies one internally consistent bundle. A document
+already open stays on its selected release. Removed release paths can return
+404 after a future deployment, so reload the reader to select the current root;
+they must never be aliased to new release bytes.

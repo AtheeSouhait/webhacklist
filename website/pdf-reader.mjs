@@ -1,8 +1,8 @@
 import "./pdf-reader-polyfills.mjs";
 import { safePdfUrl } from "./pdf-reader-url.mjs";
+import { PDFJS_ROOT } from "./pdfjs-release.mjs";
 
 const $ = (selector) => document.querySelector(selector);
-const PDFJS_ROOT = new URL("./vendor/pdfjs/", import.meta.url);
 const MAX_ZOOM = 2;
 const MIN_ZOOM = .75;
 const MAX_RENDERED_PAGES = 7;
@@ -385,7 +385,7 @@ async function start() {
   $("#open-direct").href = source.href;
   try {
     const pdfjs = await import(new URL("build/pdf.mjs", PDFJS_ROOT));
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL("./pdf-worker.mjs", import.meta.url).href;
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdf-worker.mjs", PDFJS_ROOT).href;
     loadingTask = pdfjs.getDocument({
       url: source.href,
       cMapUrl: new URL("web/cmaps/", PDFJS_ROOT).href,

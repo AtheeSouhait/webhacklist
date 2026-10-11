@@ -65,7 +65,11 @@
 /pdf-worker.mjs
   Cache-Control: public, max-age=0, must-revalidate
 
-# Fixed paths: display module, worker, fonts, cmaps and WASM update together.
+/pdfjs-release.mjs
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Legacy fixed paths revalidate. New readers use a content-addressed directory
+# containing display, worker, its polyfills, fonts, cmaps and WASM together.
 # This applies only to Cloudflare; GitHub Pages controls its own cache headers.
 /vendor/pdfjs/*
   Cache-Control: public, max-age=0, must-revalidate

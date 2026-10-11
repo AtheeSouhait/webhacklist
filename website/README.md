@@ -241,13 +241,19 @@ still needs no JavaScript dependencies.
 
 ### Regression coverage for future website changes
 
-Use the Docker command above to run all fourteen suites. The underlying
+Use the Docker command above to run all fifteen suites. The underlying
 `regression-test.mjs` entrypoint runs inside that container.
 
 The runner uses the complete preview at port 4173 for every suite, includes Terminal
 accessibility checks, and fails on the first failed suite. It clears the focused
 `WEBSEC_DIALOG_WIDTH` override so the complete popup viewport matrix always runs.
 These are shared interface contracts: preserve them when adding or changing themes.
+
+`vendor-cache-test.mjs` retains old immutable browser
+responses while switching to the content-addressed PDF.js bundle, verifies every
+release file, and renders a PDF through the real worker and standard font. The
+build and `pdfjs-release-test.mjs` reject dependency bytes with a stale release
+fingerprint; see `vendor/pdfjs/README.md` for the update command.
 
 | Behaviour to preserve | Regression coverage |
 |---|---|

@@ -26,7 +26,8 @@ const allSuites = [
   "article-scroll-test.mjs",
   "mobile-test.mjs",
   "accessibility-test.mjs",
-  "preview-test.mjs"
+  "preview-test.mjs",
+  "vendor-cache-test.mjs"
 ];
 const suites = process.env.WEBSEC_TEST_SUITES?.split(",") || allSuites;
 for (const suite of suites) {
