@@ -27,7 +27,7 @@ function discoverySelect(id, label, value, options) {
 }
 function discoveryYears() { return [["all", "Every collection"], ...newestFirstYearRecords().map((record) => [record.id, yearLabel(record.id)])]; }
 function discoveryTopics() { return [["all", "Every subject"], ...TOPICS.map((topic) => [topic.name, topic.name])]; }
-function discoveryStatus(item) { return item.preliminary ? "Preliminary · unranked" : item.rank ? `Top 10 · #${item.rank}` : item.excluded ? "Held out of vote" : "Nomination"; }
+function discoveryStatus(item) { return itemStandingLabel(item); }
 function discoveryRecord(item, mode = "card") {
   return `<article class="discovery-record ${mode === "row" ? "discovery-row" : ""}" data-discovery-record="${h(item.id)}">
     <div class="discovery-record-copy"><p class="discovery-meta"><span>${h(item.yearLabel || item.year)}</span><span>${h(item.topic)}</span><span>${h(discoveryStatus(item))}</span>${item.videos?.length ? `<span class="discovery-video">${videoMark(item)}${item.videos.some((video) => video.confidence === "confirmed") ? "Video available" : "Possible video"}</span>` : ""}</p>
@@ -71,7 +71,7 @@ function deskFilteredRecords() {
     && (!discoveryState.deskAuthor || (item.authors || []).join(" ").toLowerCase().includes(discoveryState.deskAuthor.toLowerCase()))
     && (discoveryState.deskVideo === "all" || (discoveryState.deskVideo === "with" ? Boolean(item.videos?.length) : !item.videos?.length))
     && (discoveryState.deskRead === "all" || item.read === (discoveryState.deskRead === "read"))
-    && (discoveryState.deskStanding === "all" || (discoveryState.deskStanding === "winner" ? !item.preliminary && Boolean(item.rank) : discoveryState.deskStanding === "preliminary" ? item.preliminary : !item.preliminary && !item.rank && !item.excluded))
+    && (discoveryState.deskStanding === "all" || itemStanding(item) === discoveryState.deskStanding)
   ), discoveryState.deskSort);
 }
 function deskResults() {
@@ -89,7 +89,7 @@ function renderResearchDesk() {
       <label class="discovery-field desk-query"><span>Search the archive</span><input id="desk-query" type="search" value="${h(discoveryState.deskQuery)}" placeholder="Title, subject, publisher, or a phrase…" autocomplete="off"></label>
       <label class="discovery-field"><span>Author name</span><input id="desk-author" type="search" value="${h(discoveryState.deskAuthor)}" placeholder="Any author" autocomplete="off"></label>
       ${discoverySelect("desk-year", "Collection", discoveryState.deskYear, discoveryYears())}${discoverySelect("desk-topic", "Subject", discoveryState.deskTopic, discoveryTopics())}
-      ${discoverySelect("desk-standing", "Selection", discoveryState.deskStanding, [["all", "All research"], ["winner", "Top 10"], ["nominee", "Nominations"], ["preliminary", "Preliminary"]])}
+      ${discoverySelect("desk-standing", "Selection", discoveryState.deskStanding, [["all", "All research"], ["winner", "Top 10"], ["nominee", "Nominations"], ["addition", "Later additions"], ["held", "Held out of vote"], ["preliminary", "Preliminary"]])}
       ${discoverySelect("desk-read", "Reading status", discoveryState.deskRead, [["all", "Read and unread"], ["unread", "Unread"], ["read", "Read"]])}
       ${discoverySelect("desk-sort", "Sort by", discoveryState.deskSort, [["newest", "Newest collection"], ["oldest", "Oldest collection"], ["title", "Title A–Z"], ["rank", "Rank, then title"]])}
       ${discoverySelect("desk-video", "Video", discoveryState.deskVideo, [["all", "All research"], ["with", "With video links"], ["without", "No video links"]])}

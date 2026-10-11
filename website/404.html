@@ -10,12 +10,10 @@
        exists. That is wrong for this app: index.html loads app.js, styles.css and
        its data with RELATIVE urls, so from a mistyped path like /webiste/ every
        one of them resolves under that path, comes back as this HTML, and the page
-       renders unstyled with a script that will not parse. A real 404 that sends
-       the reader to the root is the honest answer.
+       renders unstyled with a script that will not parse. Use a real 404 with
+       recovery links.
 
-       A meta refresh rather than a script: the site's CSP allows no inline
-       script, and `base-uri 'none'` rules out a <base> tag too. -->
-  <meta http-equiv="refresh" content="2; url=/">
+       Keep this page readable until the visitor chooses a recovery link. -->
   <title>Not found — Web Hacking Techniques Index</title>
   <style>
     :root { color-scheme: dark; }
@@ -38,11 +36,10 @@
   <main>
     <p class="eyebrow">Web Hacking Techniques Index</p>
     <h1>That path is not part of the archive</h1>
-    <p>Taking you to the archive now. If nothing happens,
-       <a href="/">open the archive</a>.</p>
-    <p>Preserved documents live under <code>/archived-references/</code> and the
-       app itself is served from the root — a record is addressed with a query,
-       like <code>/?pdf=2024-11</code>, never with its own path.</p>
+    <p>The link may be mistyped or the page may have moved.</p>
+    <p><a href="/">Open archive</a> · <a href="/research/">Research directory</a> · <a href="/#desk">Search research</a></p>
+    <p>The interactive archive opens records from shared app links. You can also
+       browse collection and reference pages in the research directory.</p>
   </main>
 </body>
 </html>

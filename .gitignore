@@ -13,7 +13,9 @@ website/data/
 /.local/
 /work/
 
-.vscvode/
+# Keep shared editor settings; ignore personal workspace/editor state.
+.vscode/*
+!.vscode/settings.json
 
 # Workspace copy of the reference content store. The durable store lives at
 # WEBSEC_REFS_STORE; this folder is a convenience copy and is re-derivable.

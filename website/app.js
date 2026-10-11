@@ -782,10 +782,16 @@ function archivePathsFor(record) {
   };
 }
 
-function parseYearMarkdown(markdown, year, recordLookup, yearRecord = yearRecordFor(year), sourceGroups = {}) {
+function normalizeStoryCitation(value) {
+  const url = new URL(value);
+  const fragment = url.hash;
+  url.hash = "";
+  return normalizeUrl(url.href) + fragment;
+}
+
+function parseYearMarkdown(markdown, year, recordLookup, yearRecord = yearRecordFor(year), sourceGroups = {}, storyId = (url) => `${year}-url-${encodeURIComponent(normalizeStoryCitation(url))}`) {
   const preliminary = yearRecord.status === "preliminary";
   let section = preliminary ? "candidate" : "other";
-  let position = 0;
   const items = [];
   // A label may hold ESCAPED brackets - three 2024 nominees are titled
   // `\[EN\] ...` and `\[Quick note\] ...`. A label pattern of `[^\]]+` stops at
@@ -832,6 +838,9 @@ function parseYearMarkdown(markdown, year, recordLookup, yearRecord = yearRecord
       links.push({ label: compact(m[1]), url, record, ...archivePathsFor(record) });
     }
     if (!links.length) continue;
+    // Story identity follows the original citation, never the chosen reader,
+    // title, rank or bullet position. The builder supplies the durable registry.
+    const citationUrl = links[0].url;
 
     const lead = compact(body.slice(0, firstIndex)).replace(/^[-* ]+|[-*: ]+$/g, "");
     const title = lead.length >= 4 ? lead : links[0].label;
@@ -900,7 +909,7 @@ function parseYearMarkdown(markdown, year, recordLookup, yearRecord = yearRecord
     }
 
     items.push({
-      id: `${year}-${position++}`,
+      id: storyId(citationUrl, title),
       year,
       yearLabel: yearRecord.label || year,
       preliminary,
@@ -1417,12 +1426,20 @@ async function ensureAllCollections() {
 }
 
 async function ensureItemLoaded(id) {
+  const year = collectionYearForItem(id);
+  // Positional selectors have changed meaning across releases. Without the
+  // original catalogue, mapping one to today's position would be a guess.
+  if (year && /^\d+$/.test(String(id).slice(year.length + 1))) {
+    toast("This older positional link cannot identify its research safely. Find the record in Research Desk.", 8000);
+    return null;
+  }
   const existing = state.items.find((item) => item.id === id);
   if (existing) return existing;
-  const year = collectionYearForItem(id);
   if (!year) return null;
   await ensureCollection(year);
-  return state.items.find((item) => item.id === id) || null;
+  const item = state.items.find((item) => item.id === id) || null;
+  if (!item) toast("This research record is unavailable. Find it in Research Desk.", 8000);
+  return item;
 }
 
 function shouldPrefetchArchive() {
@@ -1508,7 +1525,8 @@ async function loadArchive() {
     scheduleArchivePrefetch();
   } catch (error) {
     console.error(error);
-    bootStatus.innerHTML = `The archive could not be loaded. Serve the <strong>repository root</strong> with <code>python3 -m http.server 4173</code>, then open <code>/website/</code>.<br><br><small>${h(error.message)}</small>`;
+    bootStatus.innerHTML = `The archive could not be loaded. Please try again or browse the <a href="/research/">research directory</a>.<br><button type="button" id="boot-retry">Try again</button><br><small>${h(error.message)}</small>`;
+    $("#boot-retry").addEventListener("click", () => location.reload());
   }
 }
 
@@ -2356,8 +2374,7 @@ function setReadState(item, nextState = !state.readKeys.has(item?.readKey)) {
   state.items.forEach((entry) => {
     if (entry.readKey === item.readKey) entry.read = nextState;
   });
-  try { localStorage.setItem(READ_STORAGE_KEY, JSON.stringify([...state.readKeys])); }
-  catch { toast("Read status could not be saved in this browser"); }
+  const persisted = persistReadingState(READ_STORAGE_KEY, state.readKeys);
   state.items.filter((entry) => entry.readKey === item.readKey).forEach((entry) => {
     $$(`[data-artifact="${CSS.escape(entry.id)}"]`).forEach((element) => {
       element.classList.toggle("is-read", nextState);
@@ -2372,7 +2389,8 @@ function setReadState(item, nextState = !state.readKeys.has(item?.readKey)) {
   updateReadingProgress();
   if (state.view === "favourites") renderFavourites();
   if (isDiscoveryView()) discoveryRefresh();
-  toast(nextState ? "Marked as read" : "Marked as unread");
+  toast(`${nextState ? "Marked as read" : "Marked as unread"}${persisted ? "" : " for this session only; browser storage is unavailable"}`, persisted ? 1900 : 8000);
+  return { persisted, value: nextState };
 }
 
 function setFavouriteState(item, nextState = !state.favouriteKeys.has(item?.favouriteKey)) {
@@ -2382,8 +2400,7 @@ function setFavouriteState(item, nextState = !state.favouriteKeys.has(item?.favo
   else state.favouriteKeys.delete(item.favouriteKey);
   const related = state.items.filter((entry) => entry.favouriteKey === item.favouriteKey);
   related.forEach((entry) => { entry.favourite = nextState; });
-  try { localStorage.setItem(FAVOURITE_STORAGE_KEY, JSON.stringify([...state.favouriteKeys])); }
-  catch { toast("Favourite status could not be saved in this browser"); }
+  const persisted = persistReadingState(FAVOURITE_STORAGE_KEY, state.favouriteKeys);
   related.forEach((entry) => {
     $$(`[data-artifact="${CSS.escape(entry.id)}"]`).forEach((element) => {
       element.classList.toggle("is-favourite", nextState);
@@ -2400,9 +2417,27 @@ function setFavouriteState(item, nextState = !state.favouriteKeys.has(item?.favo
   constellationExperience?.refreshFavouriteState?.();
   syncFavouriteButtons(item);
   updateFavouriteCount();
-  toast(nextState ? "Added to favourites" : "Removed from favourites");
+  toast(`${nextState ? "Added to favourites" : "Removed from favourites"}${persisted ? "" : " for this session only; browser storage is unavailable"}`, persisted ? 1900 : 8000);
   if (state.view === "favourites") renderFavourites();
   if (isDiscoveryView()) discoveryRefresh();
+  return { persisted, value: nextState };
+}
+
+const failedReadingWrites = new Set();
+function persistReadingState(key, values) {
+  let persisted = true;
+  try {
+    localStorage.setItem(key, JSON.stringify([...values]));
+    failedReadingWrites.delete(key);
+  } catch {
+    persisted = false;
+    failedReadingWrites.add(key);
+  }
+  [$("#storage-status"), ...$$("[data-storage-status]")].forEach((notice) => {
+    notice.hidden = failedReadingWrites.size === 0;
+    notice.textContent = notice.hidden ? "" : "Some saved or read changes are session only because browser storage is unavailable. Reloading may lose these changes.";
+  });
+  return persisted;
 }
 
 function favouriteItems() {
@@ -2490,42 +2525,50 @@ function statusMarkup(item) {
 // Finalized lists have three distinct standings. Research found after a list
 // was published belongs to the archive, but it was not one of that year's
 // nominations. Keep that distinction in every compact label and detail view.
+function itemStanding(item) {
+  if (item.preliminary) return "preliminary";
+  if (item.section === "winner") return "winner";
+  if (item.section === "missed") return "addition";
+  if (item.excluded) return "held";
+  return "nominee";
+}
+
 function itemStandingLabel(item) {
-  if (item.preliminary) return "Preliminary · unranked · subject to change";
-  if (item.section === "winner") return item.rank ? `Top 10 rank #${item.rank}` : "Top 10 selection";
-  if (item.section === "missed") return "Later archive addition";
-  if (item.excluded) return "Held out of vote";
+  if (itemStanding(item) === "preliminary") return "Preliminary · unranked · subject to change";
+  if (itemStanding(item) === "winner") return item.rank ? `Top 10 rank #${item.rank}` : "Top 10 selection";
+  if (itemStanding(item) === "addition") return "Later archive addition";
+  if (itemStanding(item) === "held") return "Held out of vote";
   return "Other nomination";
 }
 
 function itemStandingShortLabel(item) {
-  if (item.preliminary) return "preliminary";
-  if (item.section === "winner") return item.rank ? `#${item.rank}` : "Top 10";
-  if (item.section === "missed") return "later addition";
-  if (item.excluded) return "held out";
+  if (itemStanding(item) === "preliminary") return "preliminary";
+  if (itemStanding(item) === "winner") return item.rank ? `#${item.rank}` : "Top 10";
+  if (itemStanding(item) === "addition") return "later addition";
+  if (itemStanding(item) === "held") return "held out";
   return "nominee";
 }
 
 function itemStandingCode(item) {
-  if (item.preliminary) return "PRELIM";
-  if (item.section === "winner") return item.rank ? `#${item.rank}` : "TOP 10";
-  if (item.section === "missed") return "ADD";
-  if (item.excluded) return "HELD";
+  if (itemStanding(item) === "preliminary") return "PRELIM";
+  if (itemStanding(item) === "winner") return item.rank ? `#${item.rank}` : "TOP 10";
+  if (itemStanding(item) === "addition") return "ADD";
+  if (itemStanding(item) === "held") return "HELD";
   return "NOM";
 }
 
 function itemStandingContext(item) {
-  if (item.preliminary) {
+  if (itemStanding(item) === "preliminary") {
     return `This is a ${item.provenance || "provisional"} research lead, not a nomination or Top 10 result. ${yearRecordFor(item.year).notice}`;
   }
-  if (item.section === "winner") {
+  if (itemStanding(item) === "winner") {
     const result = item.rank ? `placed #${item.rank}` : "was selected";
     return `This technique ${result} in the ${item.year} Top 10. The archive connects the curated listing to the preserved research and its original source.`;
   }
-  if (item.section === "missed") {
+  if (itemStanding(item) === "addition") {
     return `This work was added to the ${item.year} archive after the original list was published. It is a later archive addition, not an original nomination or Top 10 result.`;
   }
-  if (item.excluded) {
+  if (itemStanding(item) === "held") {
     return `This work appeared in the ${item.year} nomination material but was held out of the vote. It remains preserved alongside the selected techniques.`;
   }
   return `This work was nominated in ${item.year}. It remains part of the long tail of research preserved alongside the winning techniques.`;
@@ -5298,12 +5341,12 @@ function empty(message) {
 }
 
 let toastTimer;
-function toast(message) {
+function toast(message, duration = 1900) {
   const element = $("#toast");
   element.textContent = message;
   element.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => element.classList.remove("show"), 1900);
+  toastTimer = setTimeout(() => element.classList.remove("show"), duration);
 }
 
 loadArchive();

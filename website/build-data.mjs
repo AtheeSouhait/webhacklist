@@ -12,6 +12,7 @@ import process from "node:process";
 import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 import { assertGeneratedDataUntracked } from "./generated-data-guard.mjs";
+import { registerStoryIdentity, storyIdentityKey } from "./story-identity.mjs";
 
 const APP_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.dirname(APP_DIR);
@@ -170,6 +171,14 @@ async function main() {
     readJson(path.join(REPO, "archived-references/source-groups.json"))
   ]);
   if (sourceGroups.schema !== 1 || !sourceGroups.groups || !sourceGroups.inputs) throw new Error("Missing source groups; run python3 tools/references/related_sources.py build");
+  const identitiesPath = path.join(APP_DIR, "story-identities.json");
+  const identities = await readJson(identitiesPath);
+  if (identities?.schema !== 1 || !identities.collections || typeof identities.collections !== "object" || Array.isArray(identities.collections)) throw new Error("Invalid story identity registry");
+  for (const [year, entries] of Object.entries(identities.collections)) {
+    if (!ID_PATTERN.test(year) || !entries || typeof entries !== "object" || Array.isArray(entries)
+      || Object.values(entries).some(id => typeof id !== "string" || !id.startsWith(`${year}-r-`) || !/^[a-f0-9]{24}$/.test(id.slice(year.length + 3)))) throw new Error("Invalid registered story identity");
+  }
+  let identitiesChanged = false;
   for (const [filename, expected] of Object.entries(sourceGroups.inputs)) {
     if (!/^(?:20\d\d(?:-\d\d|-ai)?\.md|website\/archive-years\.json|archived-references\/manifest\.json|tools\/references\/related-sources\.json)$/.test(filename)
       || hash(await fs.readFile(path.join(REPO, filename))) !== expected) throw new Error("Source groups are stale; run python3 tools/references/related_sources.py build");
@@ -195,9 +204,18 @@ async function main() {
   const parsed = [];
   for (const record of registry.years) {
     context.__year = record.id;
+    const entries = identities.collections[record.id] ||= {};
+    context.__storyId = (url, title) => {
+      context.__identityUrl = url;
+      const identity = vm.runInContext("normalizeStoryCitation(__identityUrl)", context);
+      if (!Object.hasOwn(entries, storyIdentityKey(identities, record.id, identity, title))) {
+        identitiesChanged = true;
+      }
+      return registerStoryIdentity(identities, record.id, identity, { checkOnly, title });
+    };
     context.__markdown = await fs.readFile(path.join(REPO, `${record.id}.md`), "utf8");
     const items = vm.runInContext(
-      "parseYearMarkdown(__markdown, __year, __recordLookup, yearRecordFor(__year), __sourceGroups)",
+      "parseYearMarkdown(__markdown, __year, __recordLookup, yearRecordFor(__year), __sourceGroups, __storyId)",
       context,
       { filename: `${record.id}.md.parser.js` }
     );
@@ -219,6 +237,8 @@ async function main() {
     }
     parsed.push({ record, items: portableItems, sources, summary: collectionSummary(record, portableItems) });
   }
+  const duplicates = parsed.flatMap(({record, items}) => items.filter(item => items.some(other => other !== item && other.id === item.id)).map(item => ({year: record.id, line: item.line, title: item.title, originalUrl: item.originalUrl})));
+  if (duplicates.length) throw new Error(`Shared citations need explicit story disambiguators: ${JSON.stringify(duplicates)}`);
 
   const diagrams = Object.create(null);
   const diagramIndexPath = path.join(REPO, "archived-references", "diagram-assets.json");
@@ -379,6 +399,7 @@ async function main() {
     }
     await atomicWrite(path.join(OUTPUT_DIR, "diagrams.json"), diagramBody);
     await atomicWrite(path.join(OUTPUT_DIR, "catalogue.json"), catalogueBody);
+    if (identitiesChanged) await atomicWrite(identitiesPath, `${JSON.stringify(identities, null, 2)}\n`);
   }
 
   const shardBytes = parsed.reduce((sum, collection) => sum + collection.summary.bytes, 0);

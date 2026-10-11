@@ -51,8 +51,8 @@
   <link rel="icon" href="brand-mark.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="brand-mark.svg">
   <link rel="manifest" href="site.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=20261007.2">
-  <link rel="stylesheet" href="discovery.css?v=20261007.2">
+  <link rel="stylesheet" href="styles.css?v=20261011.1">
+  <link rel="stylesheet" href="discovery.css?v=20261011.1">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to archive</a>
@@ -64,6 +64,8 @@
     <p class="eyebrow">Web Hacking Techniques Index / research archive</p>
     <h1>Opening the archive</h1>
     <p id="boot-status">Indexing two decades of web security research…</p>
+    <p><a href="/research/">Browse the research directory</a></p>
+    <noscript><p>The interactive archive needs JavaScript. The research directory above works without it.</p></noscript>
   </div>
 
   <div class="app-shell" id="app-shell" hidden>
@@ -336,6 +338,7 @@
       <div class="artifact-talk" id="artifact-talk" hidden></div>
 
       <div class="artifact-actions" id="artifact-actions"></div>
+      <p class="storage-inline" data-storage-status role="status" hidden></p>
 
       <section class="artifact-sources" id="artifact-sources" aria-labelledby="artifact-sources-title"></section>
 
@@ -352,6 +355,7 @@
       <div>
         <p class="eyebrow" id="reader-kicker">Preserved Markdown</p>
         <strong id="reader-title">Article reader</strong>
+        <p class="storage-inline" data-storage-status role="status" hidden></p>
       </div>
       <div class="reader-actions" id="reader-actions"></div>
       <form method="dialog"><button class="reader-close" aria-label="Close reader"><svg class="close-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form>
@@ -376,6 +380,7 @@
       <div>
         <p class="eyebrow" id="pdf-kicker">Preserved PDF</p>
         <strong id="pdf-title">Document viewer</strong>
+        <p class="storage-inline" data-storage-status role="status" hidden></p>
       </div>
       <div class="pdf-actions">
         <!-- First on the bar, as the PDF button is in the Markdown reader: one
@@ -420,9 +425,10 @@
     <footer class="pdf-viewer-note" id="pdf-viewer-note"><span>Browser-native viewer</span> Open PDF uses the browser or system viewer; Download saves a copy for another app. The embedded viewer has its own navigation, search and zoom.</footer>
   </dialog>
 
+  <p id="storage-status" class="storage-status" role="status" hidden></p>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="constellation.js?v=20261007.2"></script>
-  <script src="discovery.js?v=20261007.2"></script>
-  <script src="app.js?v=20261007.2"></script>
+  <script src="constellation.js?v=20261011.1"></script>
+  <script src="discovery.js?v=20261011.1"></script>
+  <script src="app.js?v=20261011.1"></script>
 </body>
 </html>

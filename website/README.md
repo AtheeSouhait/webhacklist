@@ -18,6 +18,24 @@ and available Markdown/PDF copies. Reader and PDF toolbars return to these detai
 Companion document share links retain the selected source. Research Desk and Time
 Machine also expose a **Sources & details** action on each record.
 
+App share links use durable IDs registered in `story-identities.json`, keyed by
+the normalized original citation (including meaningful URL fragments). Data
+generation registers new stories; commit registry changes with the year-list
+changes. Keep old keys when removing records. When a citation URL changes, add
+its new key with the existing ID before rebuilding. Shared documents representing
+different stories require explicit `disambiguators`; when renaming one of those
+titles, retain its old title key and map the new title to the same disambiguator.
+The builder rejects unregistered stories in `--check` mode and duplicate active
+IDs. It never resolves old positional selectors such as `2025-0`: their meaning
+varied between releases and cannot safely be inferred from the current list.
+Visitors get a message directing them to Research Desk to find the record again.
+
+Saved/read changes remain usable when browser storage denies writes. The app
+labels those changes as session only and keeps a storage notice until the affected
+lists are written successfully. Reload restores the last successfully stored
+state. Run the focused synthetic identity, standing and persistence regressions
+with `node --test website/review-regression-test.mjs`.
+
 `tools/references/related-sources.json` maintains source relationships without
 rewriting historical lists. `python3 tools/references/related_sources.py build`
 generates complete `archived-references/source-groups.json` coverage from those
@@ -30,7 +48,9 @@ never included. The isolated regression runner below includes companion navigati
 
 ## Run it
 
-For a complete local preview, including the phone PDF viewer:
+Source editing needs no compilation. Publication requires data generation and
+host staging, which also generates the crawlable pages. For an interactive app
+preview, including the phone PDF viewer:
 
 ```bash
 node website/build-data.mjs
@@ -47,7 +67,10 @@ The isolated regression runner checks the complete PDF flow using its own previe
 Automated agents must use that container route when inspecting archived content;
 the preview commands here are for ordinary interactive website development.
 
-Serve the repository root (not this directory) so the mockup can load the archive:
+The app preview does not serve generated `/research/` or `/reference/` pages;
+use the crawlable-surface preview below for those. A simple root HTTP server is
+useful only for basic app assets and local archive paths. It does not provide the
+isolated phone PDF origin or generated static pages:
 
 ```bash
 python3 -m http.server 8000
@@ -57,11 +80,7 @@ Then open:
 
 <http://localhost:8000/website/>
 
-Run the archive/link smoke test with:
-
-```bash
-node website/smoke-test.mjs
-```
+The isolated browser runner below includes the archive/link smoke test.
 
 ## The crawlable surface
 
@@ -92,7 +111,13 @@ output without staging the whole archive:
 
 ```bash
 node website/build-pages.mjs --out /tmp/pages-preview
+python3 -m http.server 8001 --directory /tmp/pages-preview
 ```
+
+Open <http://127.0.0.1:8001/research/>. This preview contains the generated
+directory and record metadata pages; archive downloads and app links require
+the complete staged site. To preview all surfaces together, stage the Cloudflare
+target and serve `dist/`.
 
 Check the contract a crawler actually acts on — one title and one `h1` per page,
 a canonical that matches the served path, valid JSON-LD, a sitemap that agrees
@@ -101,6 +126,12 @@ with the pages, no link to an unstaged file, and an unexpired `security.txt`:
 ```bash
 node website/pages-test.mjs
 ```
+
+After regenerating data, check the README's finalized collection rows, totals
+and separate preliminary lead count with `node website/readme-counts-test.mjs`.
+The deployment gate runs this check so source-list changes cannot silently
+leave the documentation counts stale. Automated agents run generation, these
+source-reading checks and host staging in the approved offline Docker sandbox.
 
 Run the dependency-free constellation interaction regressions with
 `node --test website/constellation-test.mjs`. Synthetic events exercise zoom
@@ -193,7 +224,7 @@ still needs no JavaScript dependencies.
 
 ### Regression coverage for future website changes
 
-Use the Docker command above to run all twelve suites. The underlying
+Use the Docker command above to run all thirteen suites. The underlying
 `regression-test.mjs` entrypoint runs inside that container.
 
 The runner uses the complete preview at port 4173 for every suite, includes Terminal

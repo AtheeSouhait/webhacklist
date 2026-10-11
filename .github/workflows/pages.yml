@@ -40,17 +40,22 @@ jobs:
         run: node --test website/generated-data-guard-test.mjs
 
       - name: Generate synchronized website data
-        run: node website/build-data.mjs
+        run: |
+          node website/build-data.mjs
+          git diff --exit-code -- website/story-identities.json
 
       - name: Validate production JavaScript and generated data
         run: |
           node --check website/app.js
           node --check website/constellation.js
           node --test website/constellation-test.mjs
+          node --test website/review-regression-test.mjs
+          node --test website/pdf-reader-polyfills-test.mjs
           node --check website/build-data.mjs
           node --check website/build-pages.mjs
           node --check website/build-site.mjs
           node website/build-data.mjs --check
+          node website/readme-counts-test.mjs
 
       - name: Validate the generated crawlable pages and sitemap
         run: node website/pages-test.mjs

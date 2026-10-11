@@ -102,22 +102,32 @@ one change that will always be asked for again:
 
 | Path | |
 |---|---|
-| `2006.md` … `2025.md` | **Hand-curated.** Edited only for a reviewed addition or a link fix. |
+| `2006.md` … `2025.md`, including `2016-17.md` | **Hand-curated annual collections.** 2016/17 is combined. Edited only for a reviewed addition or a link fix; automation uses `website/archive-years.json`. |
 | `<year>-ai.md` | Machine-assembled candidates for a year with no vote yet. Deliberately separate from the curated lists. |
 | `archived-references/manifest.json` and `md/`, `pdf/` | Written by the capture tooling. |
 | `archived-references/document-gaps.md`, `store-gaps.md` | **Generated** — record the fault on the manifest entry instead. |
 | `archived-references/review-gaps.md` | Hand-written, and never overwritten by a tool run. |
 | `website/data/` | **Generated, ignored build output** from `node website/build-data.mjs`. Never stage or commit it; both hosts regenerate it. |
-| `website/*.html`, `*.css`, `*.js` | Hand-written, dependency-free, no build step and no framework. |
+| `website/*.html`, `*.css`, `*.js` | Hand-written, dependency-free source with no compilation or framework. Publishing still requires generated data, crawlable pages and host staging. |
 
-Before opening a website pull request, from the repository root:
+For website changes, follow the [website development and validation guide](website/README.md#run-it).
+The dual-origin app preview supports the complete phone PDF flow; generated static
+pages have a separate preview. Before opening a website pull request, regenerate
+data when lists or archive metadata change, run the dependency-free regressions,
+then run the isolated browser suites:
 
 ```sh
-node website/build-data.mjs      # regenerate the catalogue if list or archive data changed
-node website/smoke-test.mjs      # parses every year list and runs the security checks
+node --test website/constellation-test.mjs website/generated-data-guard-test.mjs website/pdf-reader-polyfills-test.mjs website/review-regression-test.mjs
+python3 website/container-tests.py --node-modules /path/to/approved/node_modules
 ```
 
-The smoke test is not decoration: it renders hostile Markdown through the real reader,
+The container runner includes the archive/link smoke test. Automated agents must
+generate data and inspect archive content through the approved offline Docker
+route described in the guide, rather than a host browser or parser. Before
+publication, also check generated-data freshness, README counts, crawlable pages
+and both host staging targets as documented there.
+
+The smoke test renders hostile Markdown through the real reader,
 checks that no unsafe tag survives, and verifies that every archive path the site can
 open is one the manifest actually advertises. Keep it passing.
 
