@@ -42,6 +42,11 @@ def main():
         command += ["-v", str(stage) + ":/work:ro", "-v",
                     str(ROOT / "archived-references/md") + ":/work/archived-references/md:ro",
                     "-v", str(ROOT / "original-listings") + ":/work/original-listings:ro",
+                    # Trust only this disposable fixture Git root. Docker
+                    # Desktop can map its ownership differently from the
+                    # non-root worker; never alter the host's Git config.
+                    "-e", "GIT_CONFIG_COUNT=1", "-e", "GIT_CONFIG_KEY_0=safe.directory",
+                    "-e", "GIT_CONFIG_VALUE_0=/work",
                     "--workdir", "/work", IMAGE, "python", "-B", "-m", "unittest",
                     "discover", "-s", "tools/references/tests", "-t", "tools/references"]
         result = toolbox._run_container(command, timeout=300)

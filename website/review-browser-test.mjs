@@ -32,7 +32,7 @@ try {
     await denied.addInitScript(() => {
       const write = Storage.prototype.setItem;
       Storage.prototype.setItem = function(key, value) {
-        if (["websec-favourites-v1", "technique-vault-read-v1"].includes(key)) throw new DOMException("Denied", "QuotaExceededError");
+        if (["websec-favourites-v1", "technique-vault-read-v1"].some(prefix => key === prefix || key.startsWith(`${prefix}:item:`))) throw new DOMException("Denied", "QuotaExceededError");
         return write.call(this, key, value);
       };
     });

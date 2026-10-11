@@ -254,6 +254,13 @@ labels or rankings by AI score, to avoid putting pressure on researchers and
 judges. Detailed notes and calibration results belong in gitignored
 `.local/ai-evaluation/`. Original community rankings are preserved.
 
+Research submission replies thank contributors, explain the archive value or
+reasons for non-inclusion, and leave material clarification questions open.
+[Reply and reconsideration guidance](CONTRIBUTING.md#replies-clarification-and-reconsideration)
+includes AI disclosure and a route to challenge errors;
+[self-review instructions](CONTRIBUTING.md#review-your-article-with-the-judge)
+explain how to use the judge from a local clone with the historical archive.
+
 ## 💛 Support this archive
 
 Everything here is free and always will be. Two things keep it going:

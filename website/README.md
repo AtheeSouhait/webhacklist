@@ -36,6 +36,15 @@ lists are written successfully. Reload restores the last successfully stored
 state. Run the focused synthetic identity, standing and persistence regressions
 with `node --test website/review-regression-test.mjs`.
 
+Saved/read lists synchronize between tabs, including counts, filtered results
+and open record/reader controls. Each edit writes one localStorage key per
+record; simultaneous edits to different records preserve both changes. For the
+same record, the last successful write wins. Existing v1 arrays remain readable
+as a baseline; per-record false values preserve intentional removals. Failed
+writes remain session only, survive external refreshes in that tab and retry
+when the visitor next edits the affected list. Clearing browser storage removes
+the persisted lists across tabs; unsaved session edits stay local.
+
 `tools/references/related-sources.json` maintains source relationships without
 rewriting historical lists. `python3 tools/references/related_sources.py build`
 generates complete `archived-references/source-groups.json` coverage from those
@@ -81,6 +90,13 @@ Then open:
 <http://localhost:8000/website/>
 
 The isolated browser runner below includes the archive/link smoke test.
+
+Maintainers can use the consolidated [setup and validation checklist](../tools/MAINTAINING.md)
+and `python tools/maintainer_preflight.py --node-modules /path/to/approved/node_modules`.
+The [PR workflow](../.github/workflows/validate.yml) checks isolated builds,
+reference tools and focused browser contracts before merge, with the full
+five-browser matrix on weekly and manual runs. Both isolated runners generate
+their own fresh data in container temporary storage.
 
 ## The crawlable surface
 
@@ -225,7 +241,7 @@ still needs no JavaScript dependencies.
 
 ### Regression coverage for future website changes
 
-Use the Docker command above to run all thirteen suites. The underlying
+Use the Docker command above to run all fourteen suites. The underlying
 `regression-test.mjs` entrypoint runs inside that container.
 
 The runner uses the complete preview at port 4173 for every suite, includes Terminal
@@ -572,6 +588,25 @@ untrusted PDF are hosted in a sandboxed frame on the archive's separate GitHub
 Pages file origin; that reader validates its input URL, disables dynamic
 JavaScript evaluation, bounds live canvas memory, and cannot access this
 application's DOM or storage.
+
+The custom PDF reader's **Read text** button opens selectable, reflowing text
+with page headings and keyboard-operated search. **Next match** moves focus to
+the matching text and announces its page; **View pages** returns to the rendered
+PDF. The outer **Markdown** button is the formatted text alternative where
+available. PDFs without Markdown, including annual listings, can use Read text.
+Extraction follows PDF text order and does not reconstruct tagged semantics or
+correct multi-column reading order. Scanned pages without embedded text explain
+that they require OCR in another viewer. Extraction is capped at 500 pages,
+200,000 characters per page and 5 million characters per document; affected
+pages show an explicit limit message. Search reports at most 5,000 matches.
+Text is inserted as plain DOM text, never HTML or executable PDF content.
+System reduced motion and the app's Reduce ambient motion setting both disable
+smooth reader page/search movement and loading animation. The reader accepts
+only the existing trusted parent/origin message, with a boolean motion setting.
+`pdf-state-test.mjs` covers concurrent tabs, open controls, reload/clear, a
+synthetic PDF without Markdown, keyboard search, inert extracted markup, blank
+pages, both motion settings and WCAG A/AA axe checks inside the iframe. These
+automated checks do not replace manual screen-reader and reading-order review.
 A restrictive content-security policy blocks inline scripts, objects,
 unapproved cross-origin frames, forms, media, workers in the main app and
 cleartext image loads. The smoke test validates these invariants, actively

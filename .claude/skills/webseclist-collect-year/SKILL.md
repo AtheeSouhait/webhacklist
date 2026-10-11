@@ -35,8 +35,8 @@ gitignored `.local/ai-evaluation/`. Public
 `ai-evaluation/` records contain only candidate identity, links and Added / Not
 added, with dates and merit-revision identifiers in decision history. Publish titles, source links, author credits and factual
 notes about dates, scope, source availability or prior research.
-For submissions, follow the judging skill's **Author clarification and submission
-replies** before responding to or closing an issue or PR.
+For submissions, follow the judging skill's **Submission replies and
+reconsideration** and linked templates before responding to or closing an issue or PR.
 
 Two failure modes make a run worthless, and both are easy to fall into:
 

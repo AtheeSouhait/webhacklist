@@ -17,6 +17,7 @@ const allSuites = [
   "theme-test.mjs",
   "discovery-test.mjs",
   "review-browser-test.mjs",
+  "pdf-state-test.mjs",
   "interface-test.mjs",
   "dialog-test.mjs",
   "history-test.mjs",

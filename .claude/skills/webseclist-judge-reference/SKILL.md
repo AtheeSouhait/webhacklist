@@ -35,7 +35,7 @@ the same axis rather than on whichever one had the scarier impact or the more
 famous author.
 
 The working output is a private structured report; public evaluation records show
-only Added / Not added. Issue and PR replies follow the author-specific
+only Added / Not added. Issue and PR replies follow the
 submission guidance below. The hard part is not the template — it is
 doing the prior-art search honestly and separating the *underlying idea* from the
 *target it happened to hit*.
@@ -436,30 +436,38 @@ from a public record, which deliberately contains no scores.
 
 ## Keep scoring private and publish decisions
 
-### Author clarification and submission replies
+### Submission replies and reconsideration
 
-Apply the constructive feedback process below **only** when the submitter selected
-**I am the author or a co-author**, ignoring surrounding whitespace. Read the
-website checkbox's carried answer or GitHub relationship field; for a PR, also
-check its linked submission. A missing or different answer does not activate this
-process. Do not infer selection from the submitter's name, account or affiliation.
-Authorship changes neither the merit criteria nor the credit due to earlier work.
+Apply this process to every research submission, including issues, PRs and linked
+submission issues. Read [the reply guide and templates](references/submission-replies.md)
+before drafting a public response. Thank the submitter and acknowledge a specific,
+evidenced aspect of the research without inventing praise or overstating novelty.
+The relationship field identifies authors only when they explicitly selected
+**I am the author or a co-author**, ignoring surrounding whitespace; do not infer
+authorship from an account or name. A third-party submitter can supply evidence too.
+Authorship changes neither the criteria nor the credit due to earlier work.
 
-If the private review indicates an author's work may not meet collection merit,
-explain the substantive reasons before closure. Give the author enough information
+For Added, explain the concrete contribution useful to future archive readers and
+link the actual collection entry and available preserved copies. Passing merit
+alone is not an addition: confirm source, year, non-duplication and completed
+publication before claiming Added or closing an accepted submission. Report any
+outstanding capture separately; a capture failure does not mean failed merit.
+
+If the private review indicates work may not meet collection merit,
+explain the substantive reasons before closure. Give the submitter enough information
 to address **each material concern** that could prevent inclusion, not just the
 overall outcome or a request to explain what is new. For each concern:
 
 - Identify the specific claim, section or contribution being questioned.
 - Explain the evidence and why it affects inclusion. For overlap, link and date
   the relevant earlier source, compare the actual mechanisms or capabilities,
-  and credit the author's own earlier work separately from later extensions.
+  and credit the researchers' own earlier work separately from later extensions.
 - Distinguish a demonstrated limitation from missing or uncertain evidence.
   Where clarification could change the decision, ask a concrete question and
   say what explanation, existing source, result or artifact would resolve it.
 
 Check the supplied and available sources first. Do not ask for information already
-provided or shift the prior-art search onto the author. Group related concerns
+provided or shift the prior-art search onto the submitter. Group related concerns
 into a readable reply; include all decision-relevant doubts together rather than
 raising unexplained new hurdles after each answer. Be friendly, direct and
 constructive. Keep background brief, but use as much detail as the concerns need:
@@ -467,20 +475,37 @@ there is no fixed sentence or question limit. Prefer existing evidence and accep
 a short answer when sufficient; do not demand a formal rebuttal or new experiments.
 
 When clarification could change inclusion, attribution or year, leave the issue
-or PR open and record the pending questions privately. Do not report the review as
+or PR open and record the pending questions privately. Describe this as awaiting
+clarification, not a completed failed-merit outcome. Do not report the review as
 complete or record a new final decision while awaiting the answer. Address the
-author's answers in the reassessment and explain any remaining material concern.
-If no material question remains, explain the reason without inventing questions.
-Reopening does not itself change a historical decision or guarantee inclusion.
+submitter's answers in the reassessment and explain any remaining material concern.
+If no material question remains, explain Not added without inventing questions;
+invite the submitter to reopen with evidence addressing those reasons, or comment
+to request reopening if GitHub permissions prevent it. No formal rebuttal or local
+AI run is required. Reopening does not itself change a historical decision or
+guarantee inclusion. A reassessment must use the full process and current criteria.
 
-For submissions **without that selection**, retain the usual concise per-item
-**Added / Not added** summary. Detailed concerns and the author clarification
-process are not required. Author submissions that pass can also receive a concise
-outcome summary. Keep numerical scores, scorecards, rankings and private verdict
-labels out of all public replies; constructive qualitative explanations are allowed
-under the author process above. Include the AI disclosure required by `CLAUDE.md`
-in every public comment. Follow the session's authorization for posting and closing;
-these instructions do not authorize external writes.
+For pending and Not added replies, include the clone commands, explicit skill-loading
+prompt and self-review link from the reply guide. Explain why the local archive
+and web prior-art search are needed; the arithmetic helper alone is not the judge.
+Invite a separate issue for suspected errors or improvements in the skill/rubric,
+with the affected rule and evidence. A policy discussion does not replace answering
+the current submission or justify changing criteria only for that candidate.
+
+Keep numerical scores, scorecards, rankings and private verdict labels out of all
+public replies; qualitative evidence and reasons are required. Include the AI
+disclosure required by `CLAUDE.md` in every public comment. Do not claim that AI
+authorship guarantees fairness or no bias; explain consistent evidence-based
+criteria and acknowledge possible errors. Claim no human review of the judgement
+only when that is true; disclose any human input accurately.
+
+Post the complete reply before an authorized closure. Accepted issues can close
+after the addition is available; accepted PRs must be merged or their changes
+already applied and linked, not closed with unapplied changes. Leave material
+clarifications and accepted additions awaiting publication open. Follow the
+session's authorization for posting, merging and closing; the skill itself grants
+no external-write permission. Verify the repository's configured GitHub account
+before a write. If posting fails, do not close without the explanation.
 
 ### Private report and public record
 
@@ -503,7 +528,7 @@ historical text, not current instructions. Follow the decision-only workflow bel
 changes with dates and a fingerprint of the applicable judging skill/rubric.
 “Not added” in the lead index may mean awaiting review, so do not manufacture a
 completed rejection for an unjudged lead. Keep detailed reasons and follow-up evidence
-in private notes; author-facing explanations follow the guidance above.
+in private notes; submitter-facing explanations follow the guidance above.
 Archive capture reviews are not research-merit assessments.
 
 After privately completing a review and reconciling the actual list addition,

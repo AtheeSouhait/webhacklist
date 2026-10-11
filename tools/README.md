@@ -3,6 +3,10 @@
 Dev-only tooling. Nothing here is part of the reading list itself, and no command
 in this directory ever writes a `20xx.md` year list.
 
+For Node/Python/Docker prerequisites, pinned browser dependencies, read-only
+preflight and the PR validation gate, start with the
+[maintainer setup checklist](MAINTAINING.md).
+
 There are **two archive** tools, and they preserve different things. Getting them mixed up
 is the easiest mistake to make here, because both end up producing PDFs:
 

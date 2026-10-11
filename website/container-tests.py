@@ -22,7 +22,7 @@ from refslib import toolbox
 IMAGE = "webseclist-browser-tests:source-workers-4"
 CROSS_IMAGE = "webseclist-browser-tests:cross-browser-1.55.0"
 BROWSERS = ("chromium", "chrome", "msedge", "firefox", "webkit")
-SUITES = ("smoke-test.mjs", "theme-test.mjs", "discovery-test.mjs", "review-browser-test.mjs", "interface-test.mjs",
+SUITES = ("smoke-test.mjs", "theme-test.mjs", "discovery-test.mjs", "review-browser-test.mjs", "pdf-state-test.mjs", "interface-test.mjs",
           "dialog-test.mjs", "history-test.mjs", "year-history-test.mjs", "sources-test.mjs", "article-scroll-test.mjs", "mobile-test.mjs",
           "accessibility-test.mjs", "preview-test.mjs")
 ADAPTER = '''import * as real from "/deps/node_modules/playwright/index.mjs";
@@ -30,7 +30,12 @@ export const chromium = {launch: options => real.chromium.launch({...options,
  executablePath:"/usr/bin/chromium-browser", args:[...(options?.args || []),
  "--disable-dev-shm-usage"]})};
 '''
-BOOTSTRAP = '''import os,subprocess,time,urllib.request
+BOOTSTRAP = '''import os,shutil,subprocess,time,urllib.request
+shutil.copytree('/work/website', '/tmp/work/website', ignore=shutil.ignore_patterns('data'))
+for name in os.listdir('/work'):
+ if name != 'website': os.symlink('/work/'+name, '/tmp/work/'+name)
+os.chdir('/tmp/work')
+subprocess.run(['node','website/build-data.mjs'],check=True)
 environment=dict(os.environ,PLAYWRIGHT_MODULE="/deps/adapter.mjs",
  AXE_SOURCE="/deps/node_modules/axe-core/axe.min.js",WEBSEC_TEST_URL="http://127.0.0.1:4173/")
 preview=subprocess.Popen(["node","website/preview.mjs"],env=environment)
@@ -86,7 +91,10 @@ def main():
         for name in ("archived-references", "original-listings"):
             (stage / name).mkdir()
         shutil.copytree(ROOT / "website", stage / "website",
-                        ignore=shutil.ignore_patterns("node_modules", ".tmp", ".env*", "__pycache__"))
+                        ignore=shutil.ignore_patterns("data", "node_modules", ".tmp", ".env*", "__pycache__"))
+        shutil.copyfile(ROOT / ".gitignore", stage / ".gitignore")
+        (stage / "tools/references").mkdir(parents=True)
+        shutil.copyfile(ROOT / "tools/references/related-sources.json", stage / "tools/references/related-sources.json")
         for path in ROOT.glob("*.md"):
             if re.fullmatch(r"\d{4}(?:-\d{2}|-ai)?\.md", path.name) or path.name in ("README.md", "CONTRIBUTING.md"):
                 shutil.copyfile(path, stage / path.name)

@@ -32,8 +32,8 @@ The bar is deliberately evidence-based: a find is added to a curated year list o
 Repository collection merit**, including the evidence and non-duplication checks.
 Publish only Added / Not added outcomes under `ai-evaluation/<YEAR>/`; keep
 scorecards and detailed reasons in gitignored `.local/ai-evaluation/<YEAR>/`.
-For submissions, follow the judging skill's **Author clarification and submission
-replies** before responding to or closing an issue or PR.
+For submissions, follow the judging skill's **Submission replies and
+reconsideration** and linked templates before responding to or closing an issue or PR.
 
 This is the one workflow whose whole purpose is to make a **review-gated edit to a
 curated year list** (`2006.md` .. `2025.md`). Treat that responsibility seriously:
@@ -228,8 +228,9 @@ Rules for the entries, matching the house style of the year files:
 For each year, report: how many candidates were swept, how many were judged in
 full, and which candidates were Added or Not added. Keep scores and detailed reviews
 private; public evaluation records contain outcomes only. For issue/PR replies, use
-the judging skill's author-selection gate: actionable concerns for authors whose
-work may not qualify, concise outcomes otherwise. Be honest about coverage gaps — an unswept beat is a lead for
+the judging skill's submission guidance: thanks, specific archive value for additions,
+actionable concerns and reconsideration routes for work not added, and open questions
+when clarification could change the outcome. Be honest about coverage gaps — an unswept beat is a lead for
 next time, not a silent omission. Do not inflate the yield; most years will
 add zero or one.
 

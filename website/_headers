@@ -65,8 +65,10 @@
 /pdf-worker.mjs
   Cache-Control: public, max-age=0, must-revalidate
 
+# Fixed paths: display module, worker, fonts, cmaps and WASM update together.
+# This applies only to Cloudflare; GitHub Pages controls its own cache headers.
 /vendor/pdfjs/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=0, must-revalidate
 
 /brand-mark.svg
   Cache-Control: public, max-age=0, must-revalidate

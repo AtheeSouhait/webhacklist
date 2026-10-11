@@ -945,6 +945,7 @@ const metaContent = (name) => (indexSource.match(new RegExp(`<meta (?:name|prope
 const documentTitle = (indexSource.match(/<title>([^<]*)<\/title>/) || [])[1] || "";
 const viewTitles = Object.values(JSON.parse(clientEval("JSON.stringify(VIEWS)"))).map((view) => view.title);
 const interfaceAssetVersions = [...indexSource.matchAll(/(?:href|src)="(?:styles\.css|app\.js|constellation\.js|discovery\.(?:js|css))\?v=(\d{8}\.\d+)"/g)].map((match) => match[1]);
+const appAssetVersion = (indexSource.match(/src="app\.js\?v=(\d{8}\.\d+)"/) || [])[1];
 const deploymentChecks = [
   structuredData?.["@type"] === "WebSite",
   structuredData?.name === SITE_NAME,
@@ -977,7 +978,7 @@ const deploymentChecks = [
   clientEval(`usesInSitePdfReader("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)")`) === true,
   clientEval(`usesInSitePdfReader("Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)", 390)`) === true,
   clientEval(`usesInSitePdfReader("Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)", 1440)`) === false,
-  clientEval(`inSitePdfReaderUrl("https://webhacklist.com/archived-references/pdf/2025/example.pdf?v=20260816", "light")`) === "https://irsdl.github.io/webhacklist/pdf-reader.html?file=https%3A%2F%2Fwebhacklist.com%2Farchived-references%2Fpdf%2F2025%2Fexample.pdf%3Fv%3D20260816&theme=light",
+  clientEval(`(state.view = "evidence", state.motionReduced = false, inSitePdfReaderUrl("https://webhacklist.com/archived-references/pdf/2025/example.pdf?v=20260816", "light"))`) === "https://irsdl.github.io/webhacklist/pdf-reader.html?file=https%3A%2F%2Fwebhacklist.com%2Farchived-references%2Fpdf%2F2025%2Fexample.pdf%3Fv%3D20260816&theme=light&motion=full",
   !appSource.includes('window.open(externalUrl, "_blank"'),
   // A view change rewrites only the fragment of the PDF's address, and a
   // fragment-only change is a same-document navigation: unless the element is
@@ -998,7 +999,7 @@ const deploymentChecks = [
   // stands in for the size no HEAD request will report.
   appSource.includes("state.pdfBytes = Number(ARCHIVE_CATALOGUE?.hosting?.cloudflareMaxAssetBytes) || 0;"),
   indexSource.includes('id="pdf-fallback-open"'),
-  interfaceAssetVersions.length === 5 && new Set(interfaceAssetVersions).size === 1,
+  interfaceAssetVersions.length === 5 && Boolean(appAssetVersion),
   (indexSource.match(/id="mobile-menu-backdrop"/g) || []).length === 1,
   appSource.includes('$("#mobile-menu-backdrop").addEventListener("click", () => {') && appSource.includes('focusWithoutScroll($("#mobile-menu"))'),
   stylesSource.includes("body.menu-open .mobile-menu-backdrop") && stylesSource.includes("pointer-events: auto"),
@@ -1008,7 +1009,7 @@ const deploymentChecks = [
   indexSource.includes('id="pdf-links-backdrop"') && indexSource.includes('id="pdf-links-toggle" type="button" aria-controls="pdf-links"'),
   appSource.includes('$("#pdf-dialog").addEventListener("cancel"') && appSource.includes('$("#pdf-links-backdrop").hidden = !show'),
   stylesSource.includes(".pdf-links-backdrop[hidden] { display: none; }") && stylesSource.includes(".pdf-links header button { width: 42px; height: 42px; }"),
-  pdfReaderHtmlSource.includes(`src="pdf-reader.mjs?v=${interfaceAssetVersions[0]}"`) && pdfReaderHtmlSource.includes(`href="pdf-reader.css?v=${interfaceAssetVersions[0]}"`),
+  pdfReaderHtmlSource.includes(`src="pdf-reader.mjs?v=${appAssetVersion}"`) && pdfReaderHtmlSource.includes(`href="pdf-reader.css?v=${appAssetVersion}"`),
   pdfReaderCssSource.includes("overscroll-behavior: contain") && pdfReaderCssSource.includes("-webkit-overflow-scrolling: touch"),
   stylesSource.includes("body.document-dialog-open") && stylesSource.includes("overscroll-behavior: contain"),
   stylesSource.includes(".reader-dialog[open] { display: grid") && stylesSource.includes(".pdf-dialog[open] { display: grid"),
@@ -1040,7 +1041,7 @@ const deploymentChecks = [
   notFoundSource.includes("default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'"),
   headersSource.includes("/data/collections/*"),
   headersSource.includes("max-age=31536000, immutable"),
-  headersSource.includes("/vendor/pdfjs/*")
+  /\/vendor\/pdfjs\/\*\s+Cache-Control: public, max-age=0, must-revalidate(?:\r?\n|$)/.test(headersSource)
 ];
 
 // The submission route crosses two files that nothing else keeps in step: the

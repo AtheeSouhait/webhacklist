@@ -17,6 +17,20 @@ let currentPage = 1;
 let zoom = 1;
 let generation = 0;
 let resizeTimer = null;
+let textMode = false;
+let textLoading = null;
+let textMatches = [];
+let matchIndex = -1;
+let markedPage = null;
+let hostMotionReduced = false;
+const systemMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+function applyMotion(value) {
+  if (typeof value === "boolean") hostMotionReduced = value;
+  document.documentElement.dataset.motionReduced = String(hostMotionReduced || systemMotion.matches);
+}
+
+systemMotion.addEventListener("change", () => applyMotion());
 
 function applyTheme(value, palette) {
   document.documentElement.dataset.theme = value === "light" ? "light" : "dark";
@@ -26,9 +40,11 @@ function applyTheme(value, palette) {
 
 const appearance = new URLSearchParams(location.search);
 applyTheme(appearance.get("theme"), appearance.get("palette"));
+applyMotion(appearance.get("motion") === "reduce");
 window.addEventListener("message", (event) => {
   if (event.origin !== "https://webhacklist.com" || event.source !== parent || event.data?.type !== "pdf-reader-theme") return;
   applyTheme(event.data.theme, event.data.palette);
+  applyMotion(event.data.motionReduced);
 });
 
 function setMessage(text) {
@@ -53,6 +69,11 @@ function updateControls() {
   $("#zoom-out").disabled = !count || zoom <= MIN_ZOOM;
   $("#zoom-in").disabled = !count || zoom >= MAX_ZOOM;
   $("#zoom-status").textContent = zoom === 1 ? "Fit width" : `${Math.round(zoom * 100)}%`;
+  $("#text-mode").disabled = !count;
+  if (textMode) {
+    $("#zoom-in").disabled = true;
+    $("#zoom-out").disabled = true;
+  }
 }
 
 function cancelRender(state) {
@@ -84,7 +105,7 @@ function releaseDistantPages(focus) {
 }
 
 async function renderPage(state) {
-  if (!pdfDocument || state.rendered || state.rendering) return;
+  if (textMode || !pdfDocument || state.rendered || state.rendering) return;
   state.rendering = true;
   const localGeneration = ++state.generation;
   const documentGeneration = generation;
@@ -196,6 +217,7 @@ function buildPagePlaceholders() {
     section.dataset.page = String(number);
     section.setAttribute("aria-label", `Page ${number} of ${pdfDocument.numPages}`);
     section.querySelector(".page-number").textContent = `${number} / ${pdfDocument.numPages}`;
+    section.querySelector(".page-text h2").textContent = `Page ${number}`;
     const state = {
       number,
       section,
@@ -223,7 +245,105 @@ function scrollToPage(number) {
   currentPage = target.number;
   updateControls();
   renderPage(target);
-  target.section.scrollIntoView({ behavior: "smooth", block: "start" });
+  target.section.scrollIntoView({ behavior: hostMotionReduced || systemMotion.matches ? "instant" : "smooth", block: "start" });
+}
+
+async function loadDocumentText() {
+  // Keep extracted text inert and bounded. Retain it independently of evicted
+  // canvases so assistive technology and search can reach every extracted page.
+  const selectedDocument = pdfDocument;
+  let remaining = 5_000_000;
+  for (const state of pageStates) {
+    if (selectedDocument !== pdfDocument) return;
+    $("#text-status").textContent = `Extracting page ${state.number} / ${selectedDocument.numPages}…`;
+    try {
+      if (state.number > 500 || remaining <= 0) throw Error("Text extraction limit reached; open the full PDF for this page.");
+      const page = await selectedDocument.getPage(state.number);
+      const pieces = [];
+      let length = 0;
+      // PDF.js getTextContent uses async stream iteration unavailable on some
+      // WebKit versions. Explicit reads also enforce limits before aggregation.
+      const reader = page.streamTextContent().getReader();
+      let done = false;
+      try {
+        while (!done) {
+          const chunk = await reader.read();
+          done = chunk.done;
+          if (done) break;
+          for (const item of chunk.value.items) {
+            if (typeof item.str !== "string") continue;
+            const piece = item.str + (item.hasEOL ? "\n" : " ");
+            length += piece.length;
+            if (length > Math.min(200_000, remaining)) throw Error("Page text exceeds the extraction limit; open the full PDF.");
+            pieces.push(piece);
+          }
+        }
+      } finally {
+        if (!done) await reader.cancel().catch(() => {});
+        reader.releaseLock();
+        if (!state.rendering && !state.rendered) page.cleanup();
+      }
+      state.text = pieces.join("").trim();
+      remaining -= length;
+      state.section.querySelector(".page-text-content").textContent = state.text || "No extractable text on this page. Use a PDF viewer with OCR for scanned content.";
+    } catch (error) {
+      state.text = "";
+      state.section.querySelector(".page-text-content").textContent = error.message || "Text could not be extracted from this page.";
+    }
+    // Let the reader remain responsive between pages.
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+  $("#text-query").disabled = false;
+  $("#text-find").disabled = false;
+  $("#text-status").textContent = "Text ready. Enter a word or phrase to search.";
+}
+
+function toggleTextMode() {
+  textMode = !textMode;
+  document.documentElement.dataset.textMode = String(textMode);
+  $("#text-mode").setAttribute("aria-pressed", String(textMode));
+  $("#text-mode").textContent = textMode ? "View pages" : "Read text";
+  $("#text-tools").hidden = !textMode;
+  pageStates.forEach(state => { state.section.querySelector(".page-text").hidden = !textMode; });
+  if (textMode) {
+    pageStates.forEach(releasePage);
+    textLoading ||= loadDocumentText();
+  } else {
+    pageStates.filter(state => state.visible || state.number === currentPage).forEach(renderPage);
+  }
+  updateControls();
+}
+
+function findText(event) {
+  event.preventDefault();
+  const query = $("#text-query").value.trim().toLowerCase();
+  if (markedPage) markedPage.section.querySelector(".page-text-content").textContent = markedPage.text;
+  markedPage = null;
+  if (event.type === "input") { textMatches = []; matchIndex = -1; }
+  if (!query) { $("#text-status").textContent = "Enter a word or phrase to search."; return; }
+  if (event.type === "input") { $("#text-status").textContent = "Press Enter or Next match to search."; return; }
+  if (matchIndex < 0) {
+    textMatches = [];
+    for (const state of pageStates) {
+      const text = (state.text || "").toLowerCase();
+      for (let index = text.indexOf(query); index >= 0 && textMatches.length < 5000; index = text.indexOf(query, index + query.length)) {
+        textMatches.push({ state, index });
+      }
+    }
+  }
+  if (!textMatches.length) { $("#text-status").textContent = "No matches in extracted text."; return; }
+  matchIndex = (matchIndex + 1) % textMatches.length;
+  const { state, index } = textMatches[matchIndex];
+  const mark = document.createElement("mark");
+  mark.textContent = state.text.slice(index, index + query.length);
+  mark.tabIndex = -1;
+  state.section.querySelector(".page-text-content").replaceChildren(document.createTextNode(state.text.slice(0, index)), mark, document.createTextNode(state.text.slice(index + query.length)));
+  markedPage = state;
+  currentPage = state.number;
+  updateControls();
+  mark.scrollIntoView({ behavior: hostMotionReduced || systemMotion.matches ? "instant" : "smooth", block: "center" });
+  mark.focus({ preventScroll: true });
+  $("#text-status").textContent = `Match ${matchIndex + 1} / ${textMatches.length}${textMatches.length === 5000 ? " (search limit)" : ""}, page ${state.number}`;
 }
 
 function setZoom(nextZoom) {
@@ -237,6 +357,12 @@ function setZoom(nextZoom) {
 }
 
 function wireControls() {
+  $("#text-mode").addEventListener("click", toggleTextMode);
+  // The isolated frame deliberately has no allow-forms permission. Search is
+  // entirely local and works through buttons/keys without form submission.
+  $("#text-find").addEventListener("click", findText);
+  $("#text-query").addEventListener("keydown", event => { if (event.key === "Enter") findText(event); });
+  $("#text-query").addEventListener("input", findText);
   $("#previous-page").addEventListener("click", () => scrollToPage(currentPage - 1));
   $("#next-page").addEventListener("click", () => scrollToPage(currentPage + 1));
   $("#zoom-out").addEventListener("click", () => setZoom(zoom - .25));
@@ -289,6 +415,7 @@ window.addEventListener("pagehide", () => {
   pageObserver?.disconnect();
   pageStates.forEach(releasePage);
   loadingTask?.destroy();
+  pdfDocument = null;
 });
 
 start();

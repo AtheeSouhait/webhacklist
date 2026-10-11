@@ -16,7 +16,7 @@ function fixture({ storage = new Map(), denied = false } = {}) {
     URL, URLSearchParams, console, CSS: { escape: value => value },
     location: { href: "https://example.test/#desk", hash: "#desk", search: "" },
     document: { querySelector: selector => selector === "#storage-status" ? notice : selector === "#toast" ? toast : null, querySelectorAll: () => [] },
-    localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => { if (denied) throw Error("denied"); storage.set(key, value); } },
+    localStorage: { get length() { return storage.size; }, key: index => [...storage.keys()][index] ?? null, getItem: key => storage.get(key) ?? null, setItem: (key, value) => { if (denied) throw Error("denied"); storage.set(key, value); } },
     setTimeout: () => 1, clearTimeout() {}, __registry: { schema: 1, collections: {} },
     __register: registerStoryIdentity
   });
@@ -124,4 +124,59 @@ test("successful persistence clears only the recovered storage notice and surviv
   assert.equal(notice.hidden, true);
   const reload = fixture({ storage });
   assert.equal(reload.run('loadReadKeys().has("https://example.test/b") && loadFavouriteKeys().has("https://example.test/b")'), true);
+});
+
+for (const kind of ["Read", "Favourite"]) {
+  test(`${kind} concurrent independent writes and legacy removals survive stale tabs`, () => {
+    const key = kind === "Read" ? "technique-vault-read-v1" : "websec-favourites-v1";
+    const storage = new Map([[key, '["https://example.test/old"]']]);
+    const a = fixture({ storage }), b = fixture({ storage });
+    for (const tab of [a, b]) tab.run(`state.items = ["a", "b", "old"].map(id => applyStoredState({ id, originalUrl: "https://example.test/" + id, links: [] }));`);
+    a.run(`set${kind}State(state.items[0], true)`);
+    b.run(`set${kind}State(state.items[1], true)`); // No storage event yet.
+    a.run(`set${kind}State(state.items[2], false)`);
+    b.run(`set${kind}State(state.items[1], false)`);
+    const reload = fixture({ storage });
+    assert.equal(reload.run(`loadStoredKeys(${JSON.stringify(key)}).has("https://example.test/a")`), true);
+    assert.equal(reload.run(`loadStoredKeys(${JSON.stringify(key)}).has("https://example.test/b")`), false);
+    assert.equal(reload.run(`loadStoredKeys(${JSON.stringify(key)}).has("https://example.test/old")`), false, "a tombstone overrides the unchanged legacy array");
+    b.run(`set${kind}State(state.items[0], false)`);
+    a.run(`set${kind}State(state.items[0], true)`);
+    assert.equal(fixture({ storage }).run(`loadStoredKeys(${JSON.stringify(key)}).has("https://example.test/a")`), true, "same-record conflicts use the last successful write");
+  });
+}
+
+test("invalid storage values are ignored and session edits survive external refresh", () => {
+  const storage = new Map([
+    ["websec-favourites-v1", "invalid-json"],
+    ["websec-favourites-v1:item:https://example.test/a", "true"],
+    ["websec-favourites-v1:item:https://example.test/b", "{\"active\":true}"],
+    ["websec-favourites-v1:item:", "true"]
+  ]);
+  const { run } = fixture({ storage, denied: true });
+  assert.equal(run('loadFavouriteKeys().size'), 1);
+  run('state.items = [applyStoredState({ id: "b", originalUrl: "https://example.test/b", links: [] })]; setFavouriteState(state.items[0], true)');
+  storage.set("websec-favourites-v1:item:https://example.test/a", "false");
+  run("synchronizeReadingState()");
+  assert.equal(run('state.favouriteKeys.has("https://example.test/a")'), false);
+  assert.equal(run('state.favouriteKeys.has("https://example.test/b")'), true);
+  assert.equal(run('state.items[0].favourite'), true);
+  storage.set("technique-vault-read-v1:item:https://example.test/b", "true");
+  run("synchronizeReadingState()");
+  assert.equal(run('state.items[0].read'), true, "external state updates the existing record instance");
+});
+
+test("partial recovery reports successful new edits accurately while retaining older session edits", () => {
+  const { run, context, storage, notice, messages } = fixture();
+  context.localStorage.setItem = (key, value) => {
+    if (key.endsWith("https://example.test/a")) throw Error("denied");
+    storage.set(key, value);
+  };
+  run('state.items = ["a", "b"].map(id => applyStoredState({ id, originalUrl: "https://example.test/" + id, links: [] }));');
+  assert.equal(run("setReadState(state.items[0], true).persisted"), false);
+  assert.equal(run("setReadState(state.items[1], true).persisted"), true);
+  assert.doesNotMatch(messages.at(-1), /session only/);
+  assert.equal(notice.hidden, false, "the older failed write is still visible");
+  assert.equal(run("state.items.every(item => item.read)"), true);
+  assert.equal(fixture({ storage }).run("loadReadKeys().size"), 1);
 });

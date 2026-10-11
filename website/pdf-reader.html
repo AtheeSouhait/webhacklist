@@ -7,7 +7,7 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; connect-src 'self' https://webhacklist.com; worker-src 'self'; img-src 'self' data: blob:; font-src data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'; media-src 'none'">
   <title>In-site PDF reader</title>
-  <link rel="stylesheet" href="pdf-reader.css?v=20261011.1">
+  <link rel="stylesheet" href="pdf-reader.css?v=20261011.2">
 </head>
 <body>
   <header class="reader-toolbar" aria-label="PDF page controls">
@@ -17,11 +17,22 @@
       <button id="next-page" type="button" aria-label="Next page" disabled>→</button>
     </div>
     <div class="zoom-controls">
+      <button id="text-mode" type="button" aria-pressed="false" disabled>Read text</button>
       <button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button>
       <span id="zoom-status">Fit width</span>
       <button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button>
     </div>
   </header>
+
+  <div id="text-tools" hidden>
+    <p id="text-help">Selectable extracted text in PDF order. Columns and reading order may differ from the original; scanned pages need OCR. Use the host's Markdown button for the formatted text alternative when available.</p>
+    <div id="text-search" role="search" aria-label="Search PDF text">
+      <label for="text-query">Find text</label>
+      <input id="text-query" type="search" maxlength="200" disabled>
+      <button id="text-find" type="button" disabled>Next match</button>
+      <span id="text-status" role="status"></span>
+    </div>
+  </div>
 
   <main id="document-scroll" tabindex="0" aria-label="PDF pages">
     <section class="reader-message" id="reader-message" role="status">
@@ -34,9 +45,10 @@
 
   <template id="pdf-page-template">
     <section class="pdf-page">
-      <span class="page-number"></span>
-      <canvas hidden></canvas>
+      <span class="page-number" aria-hidden="true"></span>
+      <canvas hidden aria-hidden="true"></canvas>
       <p class="page-loading">Loading page…</p>
+      <div class="page-text" hidden><h2></h2><div class="page-text-content"></div></div>
     </section>
   </template>
 
@@ -47,6 +59,6 @@
     <a id="open-direct" target="_blank" rel="noopener noreferrer">Open full PDF ↗</a>
   </section>
 
-  <script type="module" src="pdf-reader.mjs?v=20261011.1"></script>
+  <script type="module" src="pdf-reader.mjs?v=20261011.2"></script>
 </body>
 </html>

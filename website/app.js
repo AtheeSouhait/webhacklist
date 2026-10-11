@@ -74,15 +74,31 @@ const ISSUE_URL_LIMIT = 6000;
 const ISSUE_FIELD_LIMIT = 1200;
 
 function loadStoredKeys(storageKey) {
+  const keys = new Set();
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
     const safeKeys = Array.isArray(saved)
       ? saved.filter((key) => typeof key === "string" && key.length > 0 && key.length <= 2048).slice(0, 5000)
       : [];
-    return new Set(safeKeys);
-  } catch {
-    return new Set();
-  }
+    safeKeys.forEach(key => keys.add(key));
+  } catch { /* A malformed legacy list must not hide newer per-record state. */ }
+  try {
+    const prefix = `${storageKey}:item:`;
+    for (let index = 0; index < localStorage.length; index++) {
+      const name = localStorage.key(index);
+      if (!name?.startsWith(prefix)) continue;
+      const key = name.slice(prefix.length);
+      if (!validReadingKey(key)) continue;
+      const value = localStorage.getItem(name);
+      if (value === "true") keys.add(key);
+      else if (value === "false") keys.delete(key);
+    }
+  } catch { /* Storage access can be disabled. Keep the readable legacy state. */ }
+  return keys;
+}
+
+function validReadingKey(key) {
+  return typeof key === "string" && key.length > 0 && key.length <= 2048;
 }
 
 function loadReadKeys() {
@@ -122,6 +138,7 @@ function applyMotionPreference() {
   button.title = systemReduced && motionOverride === null
     ? `${label} (currently reduced by your system preference)`
     : label;
+  syncPdfReaderPreferences();
 }
 
 const VIEWS = {
@@ -1633,6 +1650,7 @@ function wireShell() {
   });
 
   applyMotionPreference();
+  window.addEventListener("storage", synchronizeReadingStorage);
   window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", applyMotionPreference);
   $("#motion-toggle").addEventListener("click", () => {
     motionOverride = !state.motionReduced;
@@ -1758,7 +1776,7 @@ function wireShell() {
     $("#pdf-loading").hidden = true;
     $("#pdf-fallback").hidden = true;
     frame.hidden = false;
-    frame.contentWindow?.postMessage({ type: "pdf-reader-theme", theme: state.readingTheme, palette: isDiscoveryView() ? state.view : "" }, PDF_READER_ORIGIN);
+    syncPdfReaderPreferences();
   });
   $("#pdf-dialog").addEventListener("close", clearPdfViewer);
   $("#pdf-dialog").addEventListener("cancel", (event) => {
@@ -2103,7 +2121,7 @@ function toggleReadingTheme() {
   catch { toast("Reading theme could not be saved in this browser"); }
   applyReadingTheme();
   if ($("#pdf-dialog").open && state.pdfUsesInSiteReader) {
-    $("#pdf-frame").contentWindow?.postMessage({ type: "pdf-reader-theme", theme: state.readingTheme, palette: isDiscoveryView() ? state.view : "" }, PDF_READER_ORIGIN);
+    syncPdfReaderPreferences();
   }
   if ($("#reader-dialog").open && state.readerItem) syncDocumentUrl(state.readerItem, "reader");
   else if ($("#pdf-dialog").open) syncDocumentUrl(state.pdfItem, state.pdfKind === "listingPdf" ? "results" : "pdf");
@@ -2374,7 +2392,7 @@ function setReadState(item, nextState = !state.readKeys.has(item?.readKey)) {
   state.items.forEach((entry) => {
     if (entry.readKey === item.readKey) entry.read = nextState;
   });
-  const persisted = persistReadingState(READ_STORAGE_KEY, state.readKeys);
+  const persisted = persistReadingState(READ_STORAGE_KEY, item.readKey, nextState);
   state.items.filter((entry) => entry.readKey === item.readKey).forEach((entry) => {
     $$(`[data-artifact="${CSS.escape(entry.id)}"]`).forEach((element) => {
       element.classList.toggle("is-read", nextState);
@@ -2400,7 +2418,7 @@ function setFavouriteState(item, nextState = !state.favouriteKeys.has(item?.favo
   else state.favouriteKeys.delete(item.favouriteKey);
   const related = state.items.filter((entry) => entry.favouriteKey === item.favouriteKey);
   related.forEach((entry) => { entry.favourite = nextState; });
-  const persisted = persistReadingState(FAVOURITE_STORAGE_KEY, state.favouriteKeys);
+  const persisted = persistReadingState(FAVOURITE_STORAGE_KEY, item.favouriteKey, nextState);
   related.forEach((entry) => {
     $$(`[data-artifact="${CSS.escape(entry.id)}"]`).forEach((element) => {
       element.classList.toggle("is-favourite", nextState);
@@ -2424,20 +2442,76 @@ function setFavouriteState(item, nextState = !state.favouriteKeys.has(item?.favo
 }
 
 const failedReadingWrites = new Set();
-function persistReadingState(key, values) {
-  let persisted = true;
-  try {
-    localStorage.setItem(key, JSON.stringify([...values]));
-    failedReadingWrites.delete(key);
-  } catch {
-    persisted = false;
-    failedReadingWrites.add(key);
+const pendingReadingWrites = new Map();
+function persistReadingState(key, itemKey, value) {
+  if (!validReadingKey(itemKey) || typeof value !== "boolean") return false;
+  // One atomic key per record: unrelated concurrent edits cannot overwrite each
+  // other. False values are tombstones overriding legacy arrays, never unions.
+  // Edits to the same record use the last successful localStorage write.
+  const currentName = `${key}:item:${itemKey}`;
+  pendingReadingWrites.set(currentName, value);
+  for (const [name, pending] of pendingReadingWrites) {
+    if (!name.startsWith(`${key}:item:`)) continue;
+    try {
+      localStorage.setItem(name, String(pending));
+      pendingReadingWrites.delete(name);
+    } catch { /* Retain failed edits locally and retry on the next list edit. */ }
   }
+  const listPersisted = ![...pendingReadingWrites.keys()].some(name => name.startsWith(`${key}:item:`));
+  if (listPersisted) failedReadingWrites.delete(key);
+  else failedReadingWrites.add(key);
+  synchronizeReadingState();
   [$("#storage-status"), ...$$("[data-storage-status]")].forEach((notice) => {
     notice.hidden = failedReadingWrites.size === 0;
     notice.textContent = notice.hidden ? "" : "Some saved or read changes are session only because browser storage is unavailable. Reloading may lose these changes.";
   });
-  return persisted;
+  return !pendingReadingWrites.has(currentName);
+}
+
+function synchronizeReadingStorage(event) {
+  if (event.storageArea !== localStorage) return;
+  if (event.key !== null && ![READ_STORAGE_KEY, FAVOURITE_STORAGE_KEY].some(key => event.key === key || event.key.startsWith(`${key}:item:`))) return;
+  synchronizeReadingState();
+  updateReadingProgress();
+  updateFavouriteCount();
+  if (isDiscoveryView()) discoveryRefresh();
+  else render();
+  // Each open document may be a companion source with its own object instance.
+  for (const [dialog, item] of [["#artifact-dialog", state.items.find(item => item.id === artifactCurrentId)], ["#reader-dialog", state.readerItem], ["#pdf-dialog", state.pdfItem]]) {
+    if (!$(dialog)?.open || !item) continue;
+    synchronizeReadingItem(item);
+    const read = $(`${dialog} [id$='read-toggle']`);
+    const saved = $(`${dialog} [id$='favourite-toggle']`);
+    if (read) {
+      read.setAttribute("aria-pressed", String(item.read));
+      if (read.id === "artifact-read-toggle") read.innerHTML = artifactActionContent("status", item.read ? "Read" : "Mark as read");
+      else read.textContent = item.read ? "✓ Read" : "○ Mark as read";
+    }
+    if (saved) {
+      saved.setAttribute("aria-pressed", String(item.favourite));
+      if (saved.id === "artifact-favourite-toggle") saved.innerHTML = artifactActionContent("favourite", item.favourite ? "Favourite" : "Add favourite");
+      else saved.textContent = item.favourite ? "★ Favourite" : "☆ Add favourite";
+    }
+  }
+}
+
+function synchronizeReadingState() {
+  state.readKeys = loadReadKeys();
+  state.favouriteKeys = loadFavouriteKeys();
+  for (const [name, value] of pendingReadingWrites) {
+    for (const [key, values] of [[READ_STORAGE_KEY, state.readKeys], [FAVOURITE_STORAGE_KEY, state.favouriteKeys]]) {
+      if (!name.startsWith(`${key}:item:`)) continue;
+      const itemKey = name.slice(`${key}:item:`.length);
+      if (value) values.add(itemKey);
+      else values.delete(itemKey);
+    }
+  }
+  state.items.forEach(synchronizeReadingItem);
+}
+
+function synchronizeReadingItem(item) {
+  item.read = state.readKeys.has(item.readKey);
+  item.favourite = state.favouriteKeys.has(item.favouriteKey);
 }
 
 function favouriteItems() {
@@ -4182,8 +4256,15 @@ function inSitePdfReaderUrl(pdfUrl, theme = state.readingTheme) {
   const reader = new URL(PDF_READER_PATH, PDF_READER_ORIGIN);
   reader.searchParams.set("file", pdfUrl);
   reader.searchParams.set("theme", theme === "light" ? "light" : "dark");
+  reader.searchParams.set("motion", state.motionReduced ? "reduce" : "full");
   if (isDiscoveryView()) reader.searchParams.set("palette", state.view);
   return reader.href;
+}
+
+function syncPdfReaderPreferences() {
+  if (!state.pdfUsesInSiteReader || !$("#pdf-dialog")?.open) return;
+  $("#pdf-frame").contentWindow?.postMessage({ type: "pdf-reader-theme", theme: state.readingTheme,
+    palette: isDiscoveryView() ? state.view : "", motionReduced: state.motionReduced }, PDF_READER_ORIGIN);
 }
 
 async function verifyPdf(mode, url, path) {
@@ -4351,6 +4432,8 @@ async function openPdfViewer(item, options = {}) {
     favouriteButton.textContent = item.favourite ? "★ Favourite" : "☆ Add favourite";
   }
   $("#pdf-open-markdown").hidden = !item?.mdPath;
+  $("#pdf-open-markdown").setAttribute("aria-label", "Read Markdown text alternative");
+  $("#pdf-open-markdown").title = "Read the formatted, selectable text alternative";
   $("#pdf-sources").hidden = !item;
   state.pdfOriginal = Boolean(options.original);
   $("#pdf-links-toggle").hidden = !item?.mdPath;
@@ -4368,7 +4451,7 @@ async function openPdfViewer(item, options = {}) {
   $("#pdf-fit-width").hidden = inSiteReader;
   $("#pdf-fit-page").hidden = inSiteReader;
   $("#pdf-viewer-note").innerHTML = inSiteReader
-    ? "<span>In-site page reader</span> Scroll through every page here. Open PDF uses the browser or system viewer; Download saves a copy for another app."
+    ? "<span>In-site page reader</span> Use Read text inside the viewer to select and search extracted text. Markdown, when available, opens the formatted text alternative. Open PDF and Download let you use another viewer."
     : "<span>Browser-native viewer</span> Open PDF uses the browser or system viewer; Download saves a copy for another app. The embedded viewer has its own navigation, search and zoom.";
 
   [$("#artifact-dialog"), $("#reader-dialog")].forEach((dialog) => {

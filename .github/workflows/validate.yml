@@ -1,0 +1,87 @@
+name: Validate pull requests
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 5 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validation-${{ github.event.pull_request.number || github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.18.0"
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install trusted instruction-check dependency
+        run: python -m pip install -r tools/requirements.txt
+      - name: Check skills and synthetic contracts
+        run: |
+          python tools/check_skills.py
+          python -m unittest discover -s tools/tests
+          node --test website/constellation-test.mjs website/generated-data-guard-test.mjs website/pdf-reader-polyfills-test.mjs website/review-regression-test.mjs
+          node --input-type=module -e "import {assertGeneratedDataUntracked} from './website/generated-data-guard.mjs'; assertGeneratedDataUntracked(process.cwd());"
+
+  isolated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Validate builds and reference tools offline
+        run: |
+          python website/container-build.py
+          python tools/references/container_tests.py
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.18.0"
+      - name: Prepare pinned external browser dependencies
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+        run: npm install --prefix "$RUNNER_TEMP/websec-browser-tests" --no-audit --no-fund --ignore-scripts --save-exact playwright@1.55.0 playwright-core@1.55.0 axe-core@4.13.0
+      - name: Run focused isolated browser gate
+        if: github.event_name != 'schedule'
+        run: python website/container-tests.py --node-modules "$RUNNER_TEMP/websec-browser-tests/node_modules" --suites smoke-test.mjs pdf-state-test.mjs review-browser-test.mjs discovery-test.mjs accessibility-test.mjs preview-test.mjs
+
+  browser-matrix:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, chrome, msedge, firefox, webkit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.18.0"
+      - name: Prepare pinned external browser dependencies
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+        run: npm install --prefix "$RUNNER_TEMP/websec-browser-tests" --no-audit --no-fund --ignore-scripts --save-exact playwright@1.55.0 playwright-core@1.55.0 axe-core@4.13.0
+      - name: Run every suite in the isolated browser
+        run: python website/container-tests.py --node-modules "$RUNNER_TEMP/websec-browser-tests/node_modules" --browsers "${{ matrix.browser }}"
