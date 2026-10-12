@@ -16,6 +16,11 @@ const allSuites = [
   "smoke-test.mjs",
   "theme-test.mjs",
   "discovery-test.mjs",
+  "shareable-discovery-test.mjs",
+  "entrance-test.mjs",
+  "saved-portability-test.mjs",
+  "shortlist-browser-test.mjs",
+  "installation-test.mjs",
   "review-browser-test.mjs",
   "pdf-state-test.mjs",
   "interface-test.mjs",
@@ -29,9 +34,12 @@ const allSuites = [
   "preview-test.mjs",
   "vendor-cache-test.mjs"
 ];
+// The real-zoom acceptance matrix is opt-in and needs the approved bundled
+// Chromium image with full Playwright persistent-context exports.
+const knownSuites = [...allSuites, "accessibility-cases-test.mjs"];
 const suites = process.env.WEBSEC_TEST_SUITES?.split(",") || allSuites;
 for (const suite of suites) {
-  if (!allSuites.includes(suite)) throw Error(`Unknown regression suite: ${suite}`);
+  if (!knownSuites.includes(suite)) throw Error(`Unknown regression suite: ${suite}`);
 }
 
 for (const suite of suites) {

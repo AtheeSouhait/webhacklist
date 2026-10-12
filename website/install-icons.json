@@ -1,0 +1,52 @@
+{
+  "source_sha256": "fddb009e59bee6365ce5f673ac6c0806f63f6050fb960557351f15a225e86692",
+  "renderer": "Chromium 140.0.7339.16",
+  "playwright": "1.55.0",
+  "generator_sha256": "d054df0702f386925b0cd31a71bc14cc1c5abcb8bc49d7ee0f22fc4e92f1e77d",
+  "icons": [
+    {
+      "name": "install-192.png",
+      "width": 192,
+      "height": 192,
+      "purpose": "any",
+      "bytes": 5958,
+      "sha256": "033f152d8665d3e7178f8a289e2a23067c945b298c7400d315a706e6dcfe36e4",
+      "painted": 5481,
+      "transparent": 0,
+      "outsideSafe": 266
+    },
+    {
+      "name": "install-512.png",
+      "width": 512,
+      "height": 512,
+      "purpose": "any",
+      "bytes": 18294,
+      "sha256": "dc6b064d97117d85b21f5d4689897e195a59596644e3c7e47b42b2b0c5928d08",
+      "painted": 36557,
+      "transparent": 0,
+      "outsideSafe": 1639
+    },
+    {
+      "name": "install-maskable-512.png",
+      "width": 512,
+      "height": 512,
+      "purpose": "maskable",
+      "bytes": 15279,
+      "sha256": "cc20e3c5f0735fb3564f342221bea635fde848167dedd9ab47012c635a5ba640",
+      "painted": 18916,
+      "transparent": 0,
+      "outsideSafe": 0
+    },
+    {
+      "name": "apple-touch-icon.png",
+      "width": 180,
+      "height": 180,
+      "purpose": "apple",
+      "bytes": 5352,
+      "sha256": "68ab7108a5646b4b95cd75e824d50363c436bfcf7dcd12c80fdb8f647ab4df99",
+      "painted": 4879,
+      "transparent": 0,
+      "outsideSafe": 238
+    }
+  ]
+}

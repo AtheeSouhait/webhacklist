@@ -46,7 +46,7 @@ a { font: inherit; }
   color: var(--muted);
   background: rgba(12, 17, 27, .97);
   border-bottom: 1px solid var(--line);
-  font-size: .72rem;
+  font-size: .8rem;
 }
 
 :root[data-theme="light"] .reader-toolbar { background: rgba(234, 237, 243, .97); }
@@ -149,10 +149,10 @@ a { font: inherit; }
   background: rgba(255, 255, 255, .9);
   border: 1px solid #d9dde4;
   border-radius: 4px;
-  font-size: .58rem;
+  font-size: .75rem;
 }
 
-.page-loading { color: #677184; font-size: .66rem; }
+.page-loading { color: #677184; font-size: .8rem; }
 .pdf-page.is-rendered .page-loading { display: none; }
 
 .reader-message,
@@ -182,11 +182,11 @@ a { font: inherit; }
 .reader-error h1 { margin: 20px 0 8px; font: 700 1rem/1.35 system-ui, sans-serif; }
 
 .reader-message p,
-.reader-error p { max-width: 440px; margin: 0; color: var(--muted); font: .7rem/1.55 system-ui, sans-serif; }
+.reader-error p { max-width: 440px; margin: 0; color: var(--muted); font: .85rem/1.55 system-ui, sans-serif; }
 
 .reader-error { position: fixed; inset: 46px 0 0; display: grid; background: var(--surface); }
 .reader-error > span { display: grid; width: 64px; height: 78px; place-items: center; color: #07101d; background: var(--accent); font-weight: 800; }
-.reader-error a { margin-top: 20px; padding: 10px 14px; color: #07101d; background: var(--accent); border-radius: 6px; font-size: .7rem; text-decoration: none; }
+.reader-error a { margin-top: 20px; padding: 10px 14px; color: #07101d; background: var(--accent); border-radius: 6px; font-size: .85rem; text-decoration: none; }
 
 @keyframes document-pulse { to { transform: translateY(-5px); opacity: .7; } }
 
@@ -198,4 +198,20 @@ a { font: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .reader-message i { animation: none; }
   * { scroll-behavior: auto !important; }
+}
+
+@media (forced-colors: active) {
+  body * { color:CanvasText !important; }
+  :is(button,input,a) { border:1px solid ButtonText; }
+  :is(button,input,a,mark):focus-visible { outline:3px solid Highlight; outline-offset:3px; }
+  button[aria-pressed="true"], .page-text mark { color:HighlightText !important; background:Highlight; border:2px solid Highlight; forced-color-adjust:none; }
+  .reader-toolbar button:disabled { color:GrayText !important; opacity:1; }
+}
+
+/* At high zoom the iframe can be short as well as narrow. Keep text visible;
+   each toolbar scrolls independently and focused controls scroll into view. */
+@media (max-height: 500px) {
+  body { grid-template-rows:auto auto minmax(40px,1fr); }
+  .reader-toolbar { min-height:min(46px,25dvh); max-height:25dvh; overflow:auto; }
+  #text-tools { max-height:30dvh; overflow:auto; }
 }

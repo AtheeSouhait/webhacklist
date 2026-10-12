@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Web Hack List">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-src 'self' https://irsdl.github.io https://www.youtube-nocookie.com; object-src 'none'; base-uri 'none'; form-action 'none'; media-src 'none'; worker-src 'none'">
   <meta name="description" content="Web Hacking Techniques Index is an interactive archive of Top 10 Web Hacking Techniques research, nominations, and clearly marked preliminary collections.">
   <meta property="og:type" content="website">
@@ -49,10 +49,10 @@
   }
   </script>
   <link rel="icon" href="brand-mark.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="brand-mark.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=20261011.1">
-  <link rel="stylesheet" href="discovery.css?v=20261011.1">
+  <link rel="stylesheet" href="styles.css?v=20261011.8">
+  <link rel="stylesheet" href="discovery.css?v=20261011.2">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to archive</a>
@@ -83,6 +83,26 @@
 
       <nav class="concept-nav" aria-label="Archive themes and saved research">
         <p class="nav-label"><span>8 themes · one archive</span><b>↓</b></p>
+        <p class="theme-explanation">Themes show the same research in different ways. Research Desk offers search, filters and reading.</p>
+        <details class="view-preferences" id="view-preferences">
+          <summary>Starting view</summary>
+          <label for="preferred-view">Open the archive in</label>
+          <select id="preferred-view" aria-describedby="preferred-view-note">
+            <option value="">Default: Board</option>
+            <option value="evidence">Investigation Board</option>
+            <option value="desk">Research Desk</option>
+            <option value="museum">Museum</option>
+            <option value="library">Library</option>
+            <option value="time">Time Machine</option>
+            <option value="signals">Signals</option>
+            <option value="constellation">Constellation</option>
+            <option value="terminal">Hacker Terminal</option>
+            <option value="favourites">Favourites &amp; Read</option>
+          </select>
+          <p id="preferred-view-note">Saved only in this browser. Shared view and document links take priority.</p>
+          <button id="reset-preferred-view" type="button">Remove preference</button>
+          <p id="preferred-view-status" role="status" aria-atomic="true"></p>
+        </details>
         <button class="nav-item active" data-view="evidence" aria-current="page">
           <span class="nav-index">01</span><span class="nav-copy"><strong>Investigation Board</strong><em>Casework surface</em></span><span class="nav-arrow" aria-hidden="true">↗</span>
         </button>
@@ -109,6 +129,7 @@
       </nav>
 
       <nav class="sidebar-project-links" aria-label="Project links">
+        <button id="show-installation-guidance" type="button" aria-controls="installation-guidance"><span aria-hidden="true">+</span> Home-screen shortcut</button>
         <button class="contribute-launch" data-contribute type="button"><span aria-hidden="true">✍</span> Submit research</button>
         <a href="https://github.com/irsdl/webhacklist" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">GH</span> GitHub</a>
         <a href="https://github.com/irsdl/webhacklist/blob/master/.claude/skills/webseclist-judge-reference/SKILL.md" target="_blank" rel="noopener noreferrer" title="Use the judging workflow with your own AI"><span aria-hidden="true">AI</span> Judge your research</a>
@@ -135,9 +156,10 @@
           <span class="mobile-theme-label"><span aria-hidden="true">☰</span> Themes <b>8</b></span>
           <span id="mobile-current-theme">Investigation Board</span><span aria-hidden="true">⌄</span>
         </button>
+        <button class="find-research" id="find-research" type="button" aria-controls="view-root">Find research <span aria-hidden="true">→</span></button>
         <label class="global-search">
           <span aria-hidden="true">⌕</span>
-          <input id="global-search" type="search" aria-label="Search the research archive" placeholder="Find a technique, researcher or topic… try tag:xss" autocomplete="off">
+          <input id="global-search" type="search" maxlength="300" aria-label="Search the research archive" placeholder="Find a technique, researcher or topic… try tag:xss" autocomplete="off">
           <kbd>/</kbd>
         </label>
         <nav class="project-links" aria-label="Project links">
@@ -167,7 +189,8 @@
           </div>
           <div class="view-intro-tools">
             <div id="discovery-appearance" hidden></div>
-            <div class="view-metric" aria-live="polite">
+            <div class="view-metric" role="status" aria-atomic="true">
+              <span class="sr-only" id="view-status-name"></span>
               <span id="view-count">—</span>
               <small id="view-count-label">artifacts in this room</small>
             </div>
@@ -175,7 +198,7 @@
           </div>
         </header>
 
-        <section id="view-root" class="view-root" aria-live="polite"></section>
+        <section id="view-root" class="view-root"></section>
       </main>
 
       <footer class="site-footer" aria-label="Support and credits">
@@ -205,7 +228,16 @@
         <div class="credit-list">
           <p><a href="/research/">Browse every year as plain pages</a> — one catalogue record per technique, readable without JavaScript.</p>
           <p><a href="/security/">Reporting a security issue</a> — private GitHub advisories. Open source, no bug bounty.</p>
+          <p><a href="/reuse.html">Reuse &amp; licences</a> — MIT for original website/tooling code; preserved research and vendored components keep their own terms.</p>
         </div>
+
+        <p class="eyebrow">On your device</p>
+        <details class="installation-guidance" id="installation-guidance">
+          <summary>Home-screen shortcut &amp; connectivity</summary>
+          <p><strong>An internet connection is required</strong> to open the archive and read preserved documents. A home-screen shortcut gives you quick access; it does not download the archive for offline reading.</p>
+          <p>On Android Chrome, open the browser menu and choose <strong>Add to home screen</strong> or <strong>Install app</strong> if offered. On iPhone or iPad Safari, use <strong>Share → Add to Home Screen</strong> and enable <strong>Open as Web App</strong> if offered. The shortcut is named <strong>Web Hack List</strong>.</p>
+          <p>Favourites, read marks and your starting view stay on this device in the browser or installed app you use. They are lists of links; preserved documents are not saved for offline use. Use <strong>Back up or import saved state</strong> in Favourites &amp; Read to move your lists. Clearing website data removes saved lists and preferences; removing a shortcut may not clear that data.</p>
+        </details>
 
         <p class="eyebrow">Credits</p>
         <div class="credit-list">
@@ -318,6 +350,32 @@
     </div>
   </dialog>
 
+  <dialog class="artifact-dialog saved-backup-dialog" id="saved-backup-dialog" aria-labelledby="saved-backup-title" tabindex="-1">
+    <form method="dialog"><button class="dialog-close" aria-label="Close saved-state backup"><svg class="close-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form>
+    <div class="dialog-body">
+      <h2 id="saved-backup-title">Back up saved and read state</h2>
+      <p>Download a JSON backup for another browser or device. It contains source identities and your marks and removals, including session-only edits. It stays on your device; importing never uploads it.</p>
+      <button type="button" id="saved-backup-export">Download JSON backup</button>
+      <label class="saved-backup-file" for="saved-backup-file">Choose a JSON backup to preview</label>
+      <input id="saved-backup-file" type="file" accept=".json,application/json" aria-describedby="saved-backup-limits">
+      <p id="saved-backup-limits">Version 1 · up to 1 MiB, 5,000 marks or removals, and 2,048 characters per HTTP(S) identity. This is a state backup, rather than a bibliography.</p>
+      <p id="saved-backup-status" role="status" tabindex="-1"></p>
+      <section id="saved-backup-preview" aria-labelledby="saved-backup-preview-title" hidden>
+        <h3 id="saved-backup-preview-title">Import preview</h3>
+        <p id="saved-backup-summary"></p>
+        <ul id="saved-backup-identities" aria-label="First identities in the backup"></ul>
+        <fieldset id="saved-backup-merge">
+          <legend>Choose how to merge</legend>
+          <label><input type="radio" name="saved-backup-mode" value="add"> Add marks: keep this browser's recorded removals and pending edits; ignore removals from the file.</label>
+          <label><input type="radio" name="saved-backup-mode" value="restore"> Apply file values: apply its explicit marks and removals, replacing conflicting values for those identities.</label>
+        </fieldset>
+        <p>Both choices keep identities and flags absent from the file. Changes in another tab are read again when you confirm. An explicit conflict uses your chosen merge rule.</p>
+        <button type="button" id="saved-backup-apply" disabled>Confirm import</button>
+      </section>
+      <button type="button" id="saved-backup-cancel">Cancel import</button>
+    </div>
+  </dialog>
+
   <dialog class="artifact-dialog" id="artifact-dialog" aria-labelledby="artifact-title" tabindex="-1">
     <header class="artifact-toolbar">
       <nav class="artifact-navigation" aria-label="Browse articles">
@@ -362,7 +420,7 @@
     </header>
     <div class="reader-progress" aria-hidden="true"><i id="reader-progress-bar"></i></div>
     <div class="reader-layout">
-      <aside class="reader-sidebar">
+      <aside class="reader-sidebar" id="reader-sidebar">
         <p class="eyebrow">On this page</p>
         <nav id="reader-toc" aria-label="Article contents"></nav>
         <p class="reader-safety">Archived article text is untrusted third-party content. It is displayed as data and cannot execute code here; external images load only after you choose their link.</p>
@@ -427,8 +485,10 @@
 
   <p id="storage-status" class="storage-status" role="status" hidden></p>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="constellation.js?v=20261011.1"></script>
-  <script src="discovery.js?v=20261011.1"></script>
-  <script src="app.js?v=20261011.2"></script>
+  <script src="constellation.js?v=20261011.4"></script>
+  <script src="shortlist.js?v=20261011.1"></script>
+  <script src="discovery.js?v=20261011.4"></script>
+  <script src="saved-state.js?v=20261011.1"></script>
+  <script src="app.js?v=20261011.8"></script>
 </body>
 </html>

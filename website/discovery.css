@@ -78,6 +78,7 @@
 .desk-filters { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; padding:24px; border:1px solid var(--line); border-radius:var(--discovery-radius); background:var(--panel); }
 .desk-query { grid-column:span 3; }
 .desk-filter-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:end; grid-column:span 2; }
+#desk-local-state-note { margin-top:16px; }
 .desk-result-heading { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px 20px; margin:26px 0 14px; color:var(--muted); font-size:.85rem; }
 .desk-result-heading > p { color:var(--ink); font-weight:650; }
 .desk-result-heading > span { font-size:.75rem; }
@@ -188,3 +189,6 @@
 @media (max-width:820px), (hover:none) and (pointer:coarse) {
   :root[data-discovery-theme] :is(.global-search input,.discovery-field input,.discovery-field select,.contribute-field input,.contribute-field select,.contribute-field textarea) { font-size:16px; }
 }
+.desk-bibliography { margin: 16px 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+.desk-bibliography p { line-height: 1.6; }
+.desk-bibliography .desk-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; }

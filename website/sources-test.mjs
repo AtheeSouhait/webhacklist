@@ -163,6 +163,7 @@ try {
   await page.route("**/data/sources/2026-ai.json?*", route => fail ? route.fulfill({ status: 503, body: "unavailable" }) : route.continue());
   await page.goto(`${base}#desk`);
   await page.waitForSelector(".discovery-record");
+  await page.waitForFunction(() => loadedCollections.size === YEAR_FILES.length);
   const id = await page.evaluate(() => state.items.find(item => item.links.some(link => link.url === "https://wp2shell.com/"))?.id);
   await page.evaluate(id => openArtifact(id), id);
   await page.waitForSelector("[data-source-retry]");

@@ -23,9 +23,15 @@ const STATIC_FILES = [
   "404.html",
   "_headers",
   "app.js",
+  "saved-state.js",
+  "shortlist.js",
   "discovery.js",
   "discovery.css",
   "brand-mark.svg",
+  "install-192.png",
+  "install-512.png",
+  "install-maskable-512.png",
+  "apple-touch-icon.png",
   "constellation.js",
   "index.html",
   "pdf-reader.css",
@@ -36,6 +42,8 @@ const STATIC_FILES = [
   "pdf-worker.mjs",
   "pdfjs-release.mjs",
   "robots.txt",
+  "reuse.html",
+  "reuse.css",
   "site.webmanifest",
   "social-preview.png",
   "styles.css"
@@ -221,6 +229,8 @@ async function main() {
       tasks.push({ source: path.join(REPO, archivePath), relative: archivePath, required: true });
     }
   } else {
+    // The root LICENSE is canonical; serve its unchanged bytes on the app origin.
+    tasks.push({ source: path.join(REPO, "LICENSE"), relative: "licence.txt", required: true });
     for (const filename of STATIC_FILES) tasks.push({ source: path.join(APP_DIR, filename), relative: filename, required: true });
     for (const filename of await listFiles(path.join(APP_DIR, "data"))) {
       tasks.push({ source: path.join(APP_DIR, "data", filename), relative: `data/${filename}`, required: true });

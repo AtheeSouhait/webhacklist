@@ -4,6 +4,15 @@
 Hacking Techniques archive. Generated collection shards keep it synchronized with the
 repository's real year lists, preliminary collection registry, and reference manifest.
 
+The footer links to [Reuse & licences](reuse.html). Original website/tooling code
+and associated software documentation use the [top-level MIT License](../LICENSE);
+preserved research, original-listing PDFs, attributed/source-derived collection
+content and vendored components retain their separate rights, terms and credits.
+Bibliography/CSV exports do not grant rights to republish cited research. The
+Cloudflare build copies the canonical `LICENSE` unchanged to `/licence.txt` and
+stages `/reuse.html` and `/reuse.css`. The app preview serves the same licence
+bytes; these guidance assets stay off the isolated GitHub reader origin.
+
 One list bullet represents one research contribution. Its first link establishes
 the story identity; a reviewed source policy can choose a fuller main reading
 source. Additional labelled sources are companions (for example, an advisory,
@@ -17,6 +26,16 @@ source's own summary, author, publisher, publication date, topics, original link
 and available Markdown/PDF copies. Reader and PDF toolbars return to these details.
 Companion document share links retain the selected source. Research Desk and Time
 Machine also expose a **Sources & details** action on each record.
+
+**Find research** opens Research Desk and focuses its search field from every
+theme, including on phones. The theme chooser explains that the themes present
+the same archive. Its **Starting view** setting remembers only an explicit
+selection in this browser; **Remove preference** restores the first-visit
+Investigation Board default. Direct view and document links override that
+preference, and Back/Forward restores the view of the visited history entry.
+Unavailable or malformed storage falls back safely. Visiting a theme does not
+save it as a preference. Board remains the default conservatively; no human
+reader study has established a reason to change it.
 
 App share links use durable IDs registered in `story-identities.json`, keyed by
 the normalized original citation (including meaningful URL fragments). Data
@@ -45,6 +64,52 @@ writes remain session only, survive external refreshes in that tab and retry
 when the visitor next edits the affected list. Clearing browser storage removes
 the persisted lists across tabs; unsaved session edits stay local.
 
+In Favourites, Read, or Both, **Back up or import saved state** downloads or
+previews a local JSON file. Nothing is uploaded. Version 1 has exactly these
+fields: `format: "webhacklist-reading-state"`, `version: 1`, and URL arrays
+`read`, `favourites`, `unread`, `unfavourited`. The last two preserve explicit
+removals, including removals overriding legacy arrays. It uses the existing
+normalized `identityUrl || originalUrl` identity, without story-ID migration.
+The backup includes all identities in the browser's state, even ones currently
+absent from the archive, rather than only the visible or filtered collection.
+It includes pending session edits. Keep the downloaded file private if your
+reading choices are private; it contains source URLs but no document content.
+
+Import validates the whole file before offering confirmation: maximum 1 MiB
+of UTF-8 JSON, 5,000 marks/removals across the four arrays and 2,048 characters
+per identity before and after normalization. Only HTTP(S) URLs without
+credentials are accepted. Unknown fields/versions, non-arrays, contradictory
+marks/removals, malformed JSON and over-limit values are rejected. Duplicates
+are combined after normalization. The preview displays at most 20 identities
+as text and shows counts, duplicates and values that differ from current marks.
+An empty file set changes nothing. Choosing or previewing a file never applies it.
+
+Confirmation requires an explicit merge choice. **Add marks** ignores imported
+removals and keeps this browser's explicit false records and pending edits.
+**Apply file values** applies only the file's explicit marks/removals, replacing
+conflicting values for those flags. Both keep absent flags, unrelated identities
+and unrelated pending edits. Confirmation reads current storage again, then
+uses existing per-record writes; it never replaces legacy arrays. Another tab's
+unrelated writes/removals survive. The last successful write to the same record
+wins. Imports retry pending writes once per affected list and retain failures;
+partial success is labelled session only rather than durable. Download captures
+these pending edits too. If storage reads are denied, a complete export/import
+is refused and current session state remains usable. A browser may block/cancel
+a requested download; the app does not claim that the file was saved.
+
+This JSON is a state backup, distinct from a bibliography. Its utility dialog
+does not create a document-history visit, closes on route/view changes and
+returns focus to its opener after a rerender. The new contracts are covered by
+`node --test website/saved-state-test.mjs website/review-regression-test.mjs`
+and `saved-portability-test.mjs` in the default browser regressions and focused
+CI gate. Run the latter through `website/container-tests.py --node-modules
+<approved-node-modules> --browsers chromium webkit --suites
+saved-portability-test.mjs`; the isolated harness covers desktop and 320px mobile
+keyboard/focus, actual downloads, a fresh-profile roundtrip, tombstones, preview
+cancellation/replacement, strict validation, denied file/storage access, partial
+write recovery and concurrent tabs. It uses synthetic backup data and existing
+archive identities, without contacting research sources.
+
 `tools/references/related-sources.json` maintains source relationships without
 rewriting historical lists. `python3 tools/references/related_sources.py build`
 generates complete `archived-references/source-groups.json` coverage from those
@@ -54,6 +119,48 @@ collection shards retain document links for use if metadata loading fails. The
 smoke test checks source matching, checksums, public field allowlisting, and budgets
 of 1.5 MB raw / 300 KB compressed per source shard and 4 MB raw in total. Scores and private review data are
 never included. The isolated regression runner below includes companion navigation checks.
+
+## Home-screen access and connectivity
+
+The footer's **Home-screen shortcut & connectivity** explains installation;
+the phone theme menu's **Home-screen shortcut** opens that guidance without
+changing the current archive view, filters or history. Android Chrome offers
+**Add to home screen** or **Install app** when available. In iPhone/iPad Safari,
+use **Share → Add to Home Screen**, and enable **Open as Web App** if offered.
+The intended shortcut name is **Web Hack List**. Platform wording and browser
+storage sharing vary; physical Android and iOS acceptance remains pending.
+
+An internet connection is required for a new launch and preserved documents.
+Saved/read lists and the starting-view preference stay in the browser or app
+storage on that device; they contain links and marks, not downloaded documents.
+Browser/app storage may be separate. The local JSON backup can transfer lists.
+Clearing website data removes persisted lists/preferences; uninstalling or
+removing a shortcut may not clear browser data. There is no service worker or
+archive cache. Offline saved reading is a separate design requiring explicit
+downloads, storage quotas, update/removal controls and acceptance tests.
+
+`brand-mark.svg` remains the favicon and interface mark. Regular PNGs are
+192/512 pixels, the opaque maskable PNG is 512 pixels with all artwork within
+the central 40%-radius safe circle, and the Apple touch PNG is 180 pixels.
+The Apple status bar uses the default presentation to avoid content behind a
+translucent system bar. Raster generation uses the already-approved offline
+`webseclist-browser-tests:cross-browser-1.55.0` image with selected read-only
+SVG/renderer mounts, capped resources and a bounded fixed-name output stream:
+
+```bash
+python website/generate-install-icons.py
+python website/generate-install-icons.py --check
+```
+
+`install-icons.json` records SVG/generator/PNG SHA-256 values, exact renderer
+version, decoded content counts and dimensions. Regeneration is byte-identical
+in that recorded image/runtime; changing the renderer requires deliberate asset
+regeneration/review, not a promise of identical bytes across browser versions.
+`installation-test.mjs` runs in the default browser regression and focused CI
+gate. It decodes every icon, checks the safe circle and source hashes, manifest
+and Apple links, narrow-screen guidance focus/URL/history, connectivity and
+focused accessibility. Chromium also queries CDP manifest/installability
+diagnostics. These browser checks do not certify a physical home-screen install.
 
 ## Run it
 
@@ -183,6 +290,8 @@ Add `--debug` for browser-process and per-layout diagnostics. Each container has
 WebKit uses its GTK backend in an isolated Xvfb display to avoid WPE headless
 animation-frame stalls during repeated viewport changes; no host display is mounted.
 Each browser has a bounded 30-minute execution allowance for the complete matrix.
+The cross-browser adapter version-checks and uses the image's installed runtime;
+the selected host package metadata must match that version.
 
 Both runners mount staged
 public website/test files, published archive files and those three dependency
@@ -241,13 +350,48 @@ still needs no JavaScript dependencies.
 
 ### Regression coverage for future website changes
 
-Use the Docker command above to run all fifteen suites. The underlying
+Use the Docker command above to run all sixteen suites. The underlying
 `regression-test.mjs` entrypoint runs inside that container.
 
 The runner uses the complete preview at port 4173 for every suite, includes Terminal
 accessibility checks, and fails on the first failed suite. It clears the focused
 `WEBSEC_DIALOG_WIDTH` override so the complete popup viewport matrix always runs.
 These are shared interface contracts: preserve them when adding or changing themes.
+
+`entrance-test.mjs` checks the visible Find research shortcut, sequential keyboard
+navigation of closed/open Starting view settings, fresh visits, explicit preference
+saving/removal, reload, malformed and denied storage, direct view/document routes,
+and Back/Forward. Desktop, 320px mobile and short 360×250 viewport checks include
+search-focus visibility below the measured sticky header and axe audits of the new
+controls. It runs in both the default regressions and the focused CI browser gate.
+
+`accessibility-test.mjs` audits all nine views, record/report/submission dialogs,
+mobile navigation, all nine Markdown reader palettes and the separate-origin
+PDF reader using benign first-party fixtures. It exercises keyboard navigation,
+focus, reader text search, a persistent concise results status, 320 px layout,
+WCAG text-spacing overrides and forced-colours emulation. The 720×500 and
+360×250 CSS viewports model reflow of a 1440×1000 window at 200% and 400%; they
+do not operate the browser's zoom UI. Only Desk/Time and readers offer both
+light and dark appearances; the other immersive views retain their dark palettes.
+These automated axe and DOM checks do not certify spoken announcements,
+screen-reader reading order, actual browser zoom, Windows contrast themes or
+physical-device readability. Record those manual acceptance results separately.
+
+`accessibility-cases-test.mjs` is an opt-in Chromium acceptance matrix. Run it
+with `python3 website/container-tests.py --node-modules <approved-node-modules>
+--suites accessibility-cases-test.mjs` (one command). It selects the approved
+cross-browser image and version-checks its installed Playwright 1.55.0 exports.
+It creates a test-only local-origin MV3 extension and disposable profile inside
+the container's tmpfs, uses `tabs.setZoom/getZoom` for real 100/200/400% tab zoom,
+and verifies DPR, CSS viewport and rendered geometry. It repeats view actions,
+both reader appearances, combined text spacing, forced-colour light/dark
+emulation, and narrow layout. At 100%, the separate PDF reader is exercised at
+720px because ordinary desktop widths intentionally use the native PDF viewer.
+Optional `--case-captures` emits seven bounded JPEGs through stdout, never through
+a writable host mount. This suite is excluded from the default matrix and
+requires bundled Chromium extension support; it does not run on other engines.
+Actual speech, Windows contrast-theme rendering, and human reading comfort
+still require recorded human sessions.
 
 `vendor-cache-test.mjs` retains old immutable browser
 responses while switching to the content-addressed PDF.js bundle, verifies every
@@ -257,6 +401,7 @@ fingerprint; see `vendor/pdfjs/README.md` for the update command.
 
 | Behaviour to preserve | Regression coverage |
 |---|---|
+| Visible research entrance; explicit removable starting-view preference; direct links and history override it | `entrance-test.mjs`, `history-test.mjs` |
 | Field Guide/Gazette removed; Research Desk/Time Machine retained; dark default and saved appearance | `mobile-test.mjs`, `discovery-test.mjs` |
 | Compact headers with useful controls near the top; all views fit phone widths and support navigation, rotation and fullscreen | `mobile-test.mjs`, `theme-test.mjs` |
 | Requested theme order, consecutive numbering and identical sidebar spacing/fonts | `interface-test.mjs` |
@@ -405,9 +550,10 @@ single-column tap list on narrow phones; the Terminal, Constellation, readers an
 viewer use dynamic viewport units and safe-area insets. Normal desktop browsers show
 a persistent top-bar control that puts the complete website into full screen. Signals,
 Constellation, Terminal and Investigation Board also show a mode-level control for a
-focused, interface-free view. The web app manifest enables an installed standalone
-window from a phone's **Add to Home Screen** action, including on iPhones where element
-fullscreen is unavailable.
+focused, interface-free view. The manifest requests standalone presentation for
+home-screen launches in supporting browsers. Native Android/iPhone installation,
+launcher icons and system-bar behaviour still require physical-device acceptance;
+the footer explains installation and the required internet connection.
 
 ## Archive routes
 
@@ -430,7 +576,7 @@ navigation indices and view kickers synchronized. `interface-test.mjs` enforces 
 Two discovery views share the original archive's records and saved/read state:
 
 - `#desk` — **Research Desk**, a blue catalogue with search, author, collection,
-  subject, selection, reading-status and video filters; sorting, pagination and compact rows.
+  subject, selection, reading-status, saved-status and video filters; sorting, pagination and compact rows.
 - `#time` — **Time Machine**, a violet chronological view with subject filters,
   year jumps, expandable collections and earlier/later archive comparisons.
 
@@ -443,6 +589,27 @@ years rather than necessarily publication dates. Both views use the shared play
 badge and accessible recording labels: confirmed recordings and possible matches
 remain distinct. Desk's video filter includes both kinds of link, combines with
 its other filters, and clears through Reset filters.
+
+**Share this search** copies a Desk URL restoring the query and all applicable
+filters, sort, page and compact rows on reload and Back/Forward. Read and saved
+filters use the recipient's local browser records; the link does not transmit
+your personal records. Global search announces its first-40 limit and offers
+**View all results in Research Desk**, carrying the query into an unfiltered Desk.
+
+The allowlisted `#desk` URL fields are `q` (up to 300 characters), `author` (120),
+`year` (a registered collection), `topic` (a registered subject), `standing`
+(`winner`, `nominee`, `addition`, `held`, `preliminary`), `saved` (`saved`, `unsaved`),
+`read` (`read`, `unread`), `sort` (`newest`, `oldest`, `title`, `rank`), `video`
+(`with`, `without`), `page` (1–10000), and `compact` (`1`). Defaults are omitted;
+`all` is also accepted for the filters. Duplicate or invalid fields fall back to
+their defaults. Text rejects control characters; search strings over 8192
+characters are ignored. Unknown fields do not become Desk state or copied links.
+Typing within an 800 ms burst replaces the burst's first history entry; leaving
+the field starts another burst. Requested pages remain intact while relevant
+collections are loading or failed, and are clamped only when results are complete.
+Document links retain the underlying Desk filters plus their source/reader theme.
+`shareable-discovery-test.mjs` exercises these flows through the real UI and runs
+in the default regressions and focused CI gate.
 
 Videos cited directly by a year list also receive a recording badge and a
 click-to-load YouTube player, including video-only entries without a local
@@ -626,7 +793,9 @@ local file.
 - Scroll, pinch, use the logarithmic on-screen zoom rail, or press `W` / `S` to fly in and out
 - `A` / `D` or left/right arrows orbit; `Q` / `E` move vertically
 - Click a research star to identify it; double-click or press `F` to fly to it
-- Press `Enter` to inspect the selected article and `R` to return to the full map
+- With the canvas focused, `Page Up` / `Page Down` select research, `Home` / `End`
+  select the first / last article, and `Enter` inspects it. The selected title is
+  exposed through a concise status. Press `R` to return to the full map.
 - Hold the circular navigator's arrows to move up, down, left or right; use its
   curved arrows to turn and its central thrusters to fly forward or backward
 - Toggle **Titles** for collision-aware labels whose size and density respond to
@@ -643,3 +812,40 @@ coronas, crisp rays and compact `✦ #rank` markers. Tugged stars
 remain close to their home cluster and settle with a
 small spring, while reduced-motion preferences remove the animated return. Rare
 comets cross the background slowly, with reduced-motion preferences respected.
+### Shortlist bibliography and printing
+
+Research Desk offers **Download Markdown**, **Download CSV** and **Print shortlist**
+for the full matching record set across every results page, in the selected sort
+order. Combine the existing query, collection, standing, author and other filters;
+choose Saved status = Saved to export your saved shortlist. The count and exact
+filter values appear in every format. Page and compact layout do not limit the
+selection. Reading-state JSON in Saved is a separate backup utility.
+
+Actions remain disabled until all selected collections load, including failed
+collections awaiting Retry. Source-detail shards then load before preparing the
+bibliography; a source-metadata failure produces a retry message and no partial
+download. Exports retain titles, all recorded individual authors, publisher/host,
+collection labels, original source URLs and per-source credits. Missing authors
+are stated as **Author not stated**; missing publishers as **Not stated**. Catalogue
+publisher/host values are retained without guessing new credits. A missing source
+metadata record is explicitly identified. Collection years are not publication dates.
+Top 10 results, other nominations, later additions, held-out nominations and
+unranked preliminary leads retain the shared standing labels. Separate curated
+stories that cite the same document remain separate records; duplicate occurrences
+of the same story/normalized identity within a collection collapse deterministically.
+
+Markdown escapes titles/metadata and link destinations. CSV quotes fields and
+embedded quotes/newlines, uses CRLF rows and prefixes formula-like cells with an
+apostrophe so a spreadsheet treats them as text. Individual authors and source
+URLs use one-per-line CSV cells. Exports are bounded to 5,000 records, 20,000
+characters per field and 8 MiB; exceeded limits stop preparation with a message.
+
+Use **Print shortlist** to prepare the dedicated print document before opening
+the browser print dialog. It includes readable URLs and credits and omits app
+navigation, canvas scenery and all dialogs. Native browser printing without a
+prepared shortlist prints guidance to use this action. Close any open reader or
+dialog first. Paper size, scaling and printer margins remain browser controls.
+`shortlist-test.mjs` covers synthetic escaping, formula protection, identity,
+credit, standing and size contracts; `shortlist-browser-test.mjs` covers real
+downloads, complete selection, loading/failure/retry, keyboard/mobile focus and
+print media, with actual PDF rendering in isolated Chromium.

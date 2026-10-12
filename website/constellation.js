@@ -675,17 +675,28 @@
     }
 
     onKeyDown(event) {
-      if (["INPUT", "BUTTON", "SELECT", "A"].includes(event.target.tagName)) return;
+      if (event.target !== this.shell) return;
       const handled = [
         "KeyW", "KeyS", "KeyA", "KeyD", "KeyQ", "KeyE",
-        "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyR", "KeyF", "Enter", "Escape"
+        "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyR", "KeyF", "Enter", "Escape",
+        "PageUp", "PageDown", "Home", "End"
       ];
       if (!handled.includes(event.code)) return;
       event.preventDefault();
 
       if (event.code === "KeyR") return this.resetCamera();
       if (event.code === "KeyF") return this.focusSelected();
-      if (event.code === "Enter" && this.selected?.item) return this.onArtifact(this.selected.item.id);
+      if (["PageUp", "PageDown", "Home", "End", "Enter"].includes(event.code)) {
+        const articles = this.nodes.filter((node) => node.type === "article");
+        if (!articles.length) return;
+        const current = articles.indexOf(this.selected);
+        const index = event.code === "Home" ? 0 : event.code === "End" ? articles.length - 1
+          : event.code === "PageUp" ? (current < 0 ? articles.length - 1 : (current - 1 + articles.length) % articles.length)
+          : event.code === "PageDown" ? (current + 1) % articles.length : Math.max(0, current);
+        this.select(articles[index]);
+        if (event.code === "Enter") return this.onArtifact(articles[index].item.id);
+        return;
+      }
       if (event.code === "Escape") return this.select(null);
       this.stopFlight();
       this.keys.add(event.code);
@@ -1021,6 +1032,10 @@
 
     select(node) {
       this.selected = node || null;
+      const status = this.shell.querySelector("#space-selection-status");
+      if (status) status.textContent = node?.type === "article"
+        ? `Selected research: ${node.item.title}. ${node.item.read ? "Read" : "Unread"}${node.item.favourite ? ", favourite" : ""}.`
+        : node ? `Selected technique: ${node.name}.` : "No research selected.";
       const selection = this.controls.selection;
       if (!node) {
         if (selection) selection.hidden = true;

@@ -25,6 +25,7 @@ const READ_STORAGE_KEY = "technique-vault-read-v1";
 const FAVOURITE_STORAGE_KEY = "websec-favourites-v1";
 const READING_THEME_STORAGE_KEY = "technique-vault-reading-theme-v1";
 const MOTION_STORAGE_KEY = "websec-reduced-motion-v1";
+const PREFERRED_VIEW_STORAGE_KEY = "websec-preferred-view-v1";
 let motionOverride;
 // Every archive mode can fill the screen. The four immersive views additionally
 // get a focused full-screen layout in styles.css; the reading views (Museum,
@@ -73,10 +74,13 @@ const REPORT_FAULTS = [
 const ISSUE_URL_LIMIT = 6000;
 const ISSUE_FIELD_LIMIT = 1200;
 
-function loadStoredKeys(storageKey) {
+function loadStoredKeys(storageKey, fallback) {
   const keys = new Set();
+  let legacy;
+  try { legacy = localStorage.getItem(storageKey); }
+  catch { return new Set(fallback || []); }
   try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    const saved = JSON.parse(legacy || "[]");
     const safeKeys = Array.isArray(saved)
       ? saved.filter((key) => typeof key === "string" && key.length > 0 && key.length <= 2048).slice(0, 5000)
       : [];
@@ -93,7 +97,7 @@ function loadStoredKeys(storageKey) {
       if (value === "true") keys.add(key);
       else if (value === "false") keys.delete(key);
     }
-  } catch { /* Storage access can be disabled. Keep the readable legacy state. */ }
+  } catch { return new Set(fallback || keys); /* Retain current session state if storage becomes unreadable. */ }
   return keys;
 }
 
@@ -179,6 +183,34 @@ const VIEWS = {
     description: "Keep a durable shortlist across every archive view, then return to the papers that matter most."
   }
 };
+
+function loadPreferredView() {
+  try {
+    const view = localStorage.getItem(PREFERRED_VIEW_STORAGE_KEY);
+    return Object.hasOwn(VIEWS, view) ? view : "";
+  } catch { return ""; }
+}
+
+let preferredView = loadPreferredView();
+
+function syncPreferredView(message = "") {
+  $("#preferred-view").value = preferredView;
+  $("#preferred-view-status").textContent = message || (preferredView
+    ? `Starting view: ${$("#preferred-view").selectedOptions[0].textContent}.`
+    : "No preference saved. New visits start on Investigation Board.");
+}
+
+function savePreferredView(view) {
+  if (view && !Object.hasOwn(VIEWS, view)) return;
+  try {
+    if (view) localStorage.setItem(PREFERRED_VIEW_STORAGE_KEY, view);
+    else localStorage.removeItem(PREFERRED_VIEW_STORAGE_KEY);
+    preferredView = view;
+    syncPreferredView(view ? "Starting view saved. It applies to your next visit." : "Preference removed. New visits start on Investigation Board.");
+  } catch {
+    syncPreferredView("Browser storage is unavailable. The starting view could not be changed.");
+  }
+}
 
 // View 09 is one surface over two browser-local lists. The copy follows the
 // selected list so the page never claims a reading history is a shortlist.
@@ -322,6 +354,7 @@ let pdfVerifyToken = 0;
 let readerRequestToken = 0;
 let lockedDialogScrollY = null;
 let dialogUnlockFrame = null;
+let documentReturnFocus = null;
 // Where the reader was in the result list when they opened a document from it.
 let globalResultsScroll = 0;
 let searchResumable = false;
@@ -329,6 +362,30 @@ let searchResumable = false;
 function focusWithoutScroll(element) {
   try { element.focus({ preventScroll: true }); }
   catch { element.focus(); }
+}
+
+function rememberDocumentFocus() {
+  if (documentReturnFocus) return;
+  const element = document.activeElement;
+  if (!element || element === document.body || element.closest("dialog")) return;
+  const attributes = ["data-artifact", "data-discovery-action", "data-discovery-value",
+    "data-terminal-md", "data-terminal-pdf", "data-term-command", "data-saved-backup"]
+    .filter((name) => element.hasAttribute(name));
+  const selector = element.id ? `#${CSS.escape(element.id)}` : attributes.length
+    ? attributes.map((name) => `[${name}="${CSS.escape(element.getAttribute(name))}"]`).join("") : "";
+  documentReturnFocus = { element, selector, index: selector ? $$(selector).indexOf(element) : 0, view: state.view };
+}
+
+function restoreDocumentFocus() {
+  const saved = documentReturnFocus;
+  documentReturnFocus = null;
+  if (!saved || saved.view !== state.view) return;
+  // Read/save updates can replace a view while its dialog is open. Resolve the
+  // same logical opener instead of relying on the removed native focus node.
+  const target = saved.element.isConnected ? saved.element
+    : saved.selector ? $$(saved.selector)[saved.index] : null;
+  const available = target && !target.disabled && !target.closest("dialog") && target.getClientRects().length;
+  focusWithoutScroll(available ? target : $(state.view === "terminal" ? "#terminal-command" : "#main-content"));
 }
 
 // Mobile WebKit still lets the page behind a top-layer <dialog> rubber-band in
@@ -367,10 +424,12 @@ function syncDialogScrollLock() {
     document.documentElement.style.scrollBehavior = "auto";
     window.scrollTo(0, restoreY);
     document.documentElement.style.scrollBehavior = previousScrollBehavior;
+    restoreDocumentFocus();
   });
 }
 
 function showLockedModal(dialog) {
+  rememberDocumentFocus();
   if (!dialog.open) dialog.showModal();
   syncDialogScrollLock();
   // Focusing the dialog surface keeps browsers from auto-focusing the first
@@ -493,7 +552,8 @@ function documentShareUrl(item, format = "artifact") {
   const url = new URL(location.href);
   const selectedYear = url.searchParams.get("year");
   url.search = "";
-  if (selectedYear) url.searchParams.set("year", selectedYear);
+  if (state.view === "desk") writeDeskRoute(url);
+  else if (selectedYear) url.searchParams.set("year", selectedYear);
   if (format === "reader" && item?.id) url.searchParams.set("reader", item.id);
   if (format === "pdf" && item?.id) url.searchParams.set("pdf", item.id);
   if (["reader", "pdf"].includes(format) && (item?.sourceId || Number.isInteger(item?.sourceIndex))) url.searchParams.set("source", item.sourceId || String(item.sourceIndex));
@@ -550,14 +610,19 @@ async function selectArchiveYear(value) {
   const view = state.view, year = validArchiveYear(value, view), startUrl = location.href;
   if (!year || year === selectedArchiveYear()) return;
   const revision = ++routeRevision;
-  if (year !== "all") await Promise.all(year.split(",").map(ensureCollection));
+  if (year !== "all" && view !== "desk") await Promise.all(year.split(",").map(ensureCollection));
   if (revision !== routeRevision || view !== state.view || location.href !== startUrl) return;
   rememberArchiveYear();
   applyArchiveYear(view, year);
+  if (view === "desk") {
+    syncDeskRoute();
+    discoveryRefresh();
+    return;
+  }
   const url = new URL(archiveViewUrl());
   if (year === "all") url.searchParams.delete("year");
   else url.searchParams.set("year", year);
-  history.pushState({ archiveYear: year }, "", url.href);
+  history.pushState({ archiveYear: year, archiveView: viewHash() }, "", url.href);
   handledRouteUrl = location.href;
   if (view === "terminal") await runTerminalCommand(`ls /${year === "all" ? "" : year}`);
   else if (isDiscoveryView()) discoveryRefresh();
@@ -568,6 +633,8 @@ async function selectArchiveYear(value) {
 function archiveViewUrl() {
   const url = new URL(location.href);
   ["reader", "pdf", "results", "theme", "source"].forEach((key) => url.searchParams.delete(key));
+  if (state.view === "desk") writeDeskRoute(url);
+  else Object.keys(DESK_URL_FIELDS).filter(key => key !== "year").forEach(key => url.searchParams.delete(key));
   url.hash = viewHash();
   return url.href;
 }
@@ -595,7 +662,7 @@ function dismissDocumentHistory() {
 }
 
 function closeDocumentDialogs() {
-  ["#report-dialog", "#artifact-dialog", "#reader-dialog", "#pdf-dialog"].forEach((id) => $(id).close());
+  ["#saved-backup-dialog", "#report-dialog", "#artifact-dialog", "#reader-dialog", "#pdf-dialog"].forEach((id) => $(id).close());
 }
 
 async function restoreArchiveRoute() {
@@ -609,15 +676,19 @@ async function restoreArchiveRoute() {
     closeDocumentDialogs();
     setMobileMenuOpen(false);
     if (next === "submit") return openSubmissionDialog();
-    const requested = resolveViewHash(next) || { view: state.view };
+    const requested = resolveViewHash(next) || resolveViewHash(history.state?.archiveView) || { view: "evidence" };
     const year = validArchiveYear(params.get("year"), requested.view)
       || validArchiveYear(history.state?.archiveYear, requested.view);
     const yearChanged = Boolean(year && year !== selectedArchiveYear(requested.view));
     const viewChanged = requested.view !== state.view;
-    if (year && year !== "all") await Promise.all(year.split(",").map(ensureCollection));
-    if (requested.view === "time" && year && year !== "all") await ensureAllCollections();
+    const deskChanged = requested.view === "desk";
+    if (deskChanged) {
+      Object.assign(discoveryState, deskRouteState(location.search));
+      deskTypingField = "";
+    }
+    if (year && year !== "all" && !isDiscoveryView(requested.view)) await Promise.all(year.split(",").map(ensureCollection));
     if (revision !== routeRevision) return;
-    if (yearChanged) {
+    if (yearChanged && !deskChanged) {
       applyArchiveYear(requested.view, year);
       if (requested.view === "terminal") {
         state.terminalLines.push(year === "all" ? terminalRootListing()
@@ -629,7 +700,7 @@ async function restoreArchiveRoute() {
     if (requested.savedMode) state.savedMode = requested.savedMode;
     else if (requested.view === "favourites") state.savedMode = "favourites";
     if (viewChanged) await setView(requested.view, false);
-    else if (yearChanged || state.savedMode !== previousMode) render();
+    else if (yearChanged || deskChanged || state.savedMode !== previousMode) render();
     if (requested.view === "time" && (yearChanged || viewChanged) && year) discoveryJump(year === "all" ? "main-content" : `time-${year}`);
     const theme = params.get("theme");
     if (["light", "dark"].includes(theme)) { state.readingTheme = theme; applyReadingTheme(); }
@@ -649,6 +720,7 @@ async function restoreArchiveRoute() {
     });
   } finally {
     if (restoringRoute === revision) restoringRoute = 0;
+    if (state.view === "desk" && !discoveryLoadState().missing.length && !documentDialogOpen()) syncDeskRoute("", true);
     syncDialogScrollLock();
   }
 }
@@ -1473,9 +1545,14 @@ function scheduleArchivePrefetch() {
   const next = () => {
     const year = queue.shift();
     if (!year) return;
+    const wasLoaded = loadedCollections.has(year);
     ensureCollection(year).then(() => {
       if (state.query) updateGlobalSearch();
       if (state.view === "favourites" && !queue.length) renderFavourites();
+      if (!wasLoaded && isDiscoveryView() && discoveryRequiredCollections().includes(year)) {
+        discoveryRefresh();
+        if (state.view === "time" && !discoveryLoadState().missing.length && discoveryState.timeYear !== "all") discoveryJump(`time-${discoveryState.timeYear}`);
+      }
     }).catch((error) => console.warn(`Background archive load failed for ${year}:`, error)).finally(() => schedule(next));
   };
   schedule(next);
@@ -1519,14 +1596,27 @@ async function loadArchive() {
     if (requestedView) {
       state.view = requestedView.view;
       if (requestedView.savedMode) state.savedMode = requestedView.savedMode;
+    } else if (!location.hash && !["reader", "pdf", "results"].some(key => requestedDocument.has(key))) {
+      state.view = preferredView || "evidence";
     }
+    // Remember the resolved home view in this history entry, so returning to
+    // a bare homepage does not pick up a later setting or the view just left.
+    history.replaceState({ ...history.state, archiveView: viewHash() }, "", location.href);
     const readerId = requestedDocument.get("reader");
     const pdfId = requestedDocument.get("pdf");
     const initialDocument = readerId || pdfId || sharedArtifact;
-    const initialYear = collectionYearForItem(initialDocument) || latestFinal;
+    const requestedYear = validArchiveYear(requestedDocument.get("year"), state.view);
+    if (state.view === "desk") Object.assign(discoveryState, deskRouteState(location.search));
+    const selectedDeskYear = state.view === "desk" && requestedYear && requestedYear !== "all" ? requestedYear : "";
+    const initialYear = collectionYearForItem(initialDocument) || selectedDeskYear || latestFinal;
 
     bootStatus.textContent = `Opening ${yearLabel(initialYear)}…`;
-    await ensureCollection(initialYear);
+    try {
+      await ensureCollection(initialYear);
+    } catch (error) {
+      if (!selectedDeskYear || initialDocument) throw error;
+      discoveryState.errors.set(initialYear, error.message);
+    }
     if (state.view === "favourites") await ensureAllCollections();
     $("#sidebar-count").textContent = state.archiveTotal.toLocaleString();
     updateReadingProgress();
@@ -1554,7 +1644,8 @@ function setMobileMenuOpen(open) {
   const trigger = $("#mobile-menu");
   $("#concept-sidebar").toggleAttribute("inert", compact && !isOpen);
   trigger.setAttribute("aria-expanded", String(isOpen));
-  trigger.setAttribute("aria-label", isOpen ? "Close themes menu" : "Choose from 8 archive themes");
+  const currentTheme = $(`.nav-item[data-view="${state.view}"] strong`).textContent;
+  trigger.setAttribute("aria-label", isOpen ? "Close themes menu" : `Choose from 8 archive themes. Current view: ${currentTheme}`);
   $(".workspace").inert = isOpen;
   const sidebar = $("#concept-sidebar");
   if (isOpen) {
@@ -1577,6 +1668,37 @@ function wireShell() {
   }).observe($(".topbar"));
   $("#discovery-appearance").addEventListener("click", handleDiscoveryClick);
   $$(".nav-item").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
+  $("#find-research").addEventListener("click", async () => {
+    await setView("desk");
+    const query = $("#desk-query");
+    if (!query) return;
+    // Native focus scrolling can center an input behind a sticky header in
+    // WebKit. Place it in the available reading area explicitly instead.
+    focusWithoutScroll(query);
+    const rect = query.getBoundingClientRect();
+    const top = $(".topbar").getBoundingClientRect().bottom + 8;
+    const bottom = innerHeight - 8;
+    if (rect.top < top) window.scrollBy({ top: rect.top - top, behavior: "instant" });
+    else if (rect.bottom > bottom) window.scrollBy({ top: Math.min(rect.top - top, rect.bottom - bottom), behavior: "instant" });
+  });
+  syncPreferredView();
+  $("#show-installation-guidance").addEventListener("click", () => {
+    setMobileMenuOpen(false);
+    const guidance = $("#installation-guidance");
+    guidance.open = true;
+    const summary = guidance.querySelector("summary");
+    focusWithoutScroll(summary);
+    const top = $(".topbar").getBoundingClientRect().bottom + 12;
+    window.scrollBy({top: summary.getBoundingClientRect().top - top, behavior: "instant"});
+  });
+  $("#preferred-view").addEventListener("change", event => savePreferredView(event.target.value));
+  $("#reset-preferred-view").addEventListener("click", () => savePreferredView(""));
+  window.addEventListener("storage", event => {
+    if (event.key === PREFERRED_VIEW_STORAGE_KEY || event.key === null) {
+      preferredView = loadPreferredView();
+      syncPreferredView();
+    }
+  });
 
   setMobileMenuOpen(false);
   $("#mobile-menu").addEventListener("click", () => {
@@ -1594,18 +1716,19 @@ function wireShell() {
   // project links and Resume button that do not go through setView().
   $("#concept-sidebar").addEventListener("keydown", (event) => {
     if (event.key !== "Tab" || !document.body.classList.contains("menu-open")) return;
-    const controls = $$("#concept-sidebar a, #concept-sidebar button").filter((el) => el.getClientRects().length && !el.disabled);
+    const controls = $$("#concept-sidebar a, #concept-sidebar button, #concept-sidebar summary, #concept-sidebar select").filter((el) => el.getClientRects().length && !el.disabled);
     const first = controls[0], last = controls.at(-1);
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   });
   $("#concept-sidebar").addEventListener("click", (event) => {
+    if (event.target.closest("#view-preferences")) return;
     if (event.target.closest("a, button")) setMobileMenuOpen(false);
   });
   window.matchMedia("(max-width: 820px)").addEventListener("change", () => setMobileMenuOpen(false));
 
   $("#global-search").addEventListener("input", (event) => {
-    state.query = event.target.value.trim();
+    state.query = event.target.value.slice(0, 300).trim();
     updateGlobalSearch();
     if (state.query) {
       const query = state.query;
@@ -1621,6 +1744,14 @@ function wireShell() {
     if (!panel.hidden && !event.target.closest?.("#global-results, .global-search")) closeGlobalSearch();
   });
   $("#global-results-list").addEventListener("click", (event) => {
+    const handoff = event.target.closest("[data-desk-handoff]");
+    if (handoff && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      Object.assign(discoveryState, deskRouteState(new URL(handoff.href).search));
+      closeGlobalSearch();
+      setView("desk").then(() => focusWithoutScroll($("#desk-query")));
+      return;
+    }
     const target = event.target.closest("[data-artifact]");
     if (!target) return;
     hideGlobalResults();
@@ -1739,26 +1870,59 @@ function wireShell() {
     const progress = element.scrollTop / Math.max(1, element.scrollHeight - element.clientHeight);
     $("#reader-progress-bar").style.width = `${clampNumber(progress * 100, 0, 100)}%`;
   });
+  [$("#reader-actions"), $(".pdf-actions")].forEach((bar) => {
+    bar.addEventListener("focusin", (event) => {
+      const control = event.target.closest("button,a");
+      // Native focus can leave a partly visible action clipped at the edge of
+      // a narrow toolbar. Bring its complete label into the scrolling strip.
+      control?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
+    });
+  });
+  const artifactToolbar = $("#artifact-dialog .artifact-toolbar");
+  new ResizeObserver(() => {
+    $("#artifact-dialog").style.setProperty("--artifact-toolbar-height", `${artifactToolbar.getBoundingClientRect().height}px`);
+  }).observe(artifactToolbar);
   $("#reader-toc").addEventListener("click", (event) => {
     const target = event.target.closest("[data-reader-target]");
-    if (target) $("#reader-content").querySelector(`#${CSS.escape(target.dataset.readerTarget)}`)?.scrollIntoView({ behavior: state.motionReduced ? "instant" : "smooth", block: "start" });
+    if (!target) return;
+    const heading = $("#reader-content").querySelector(`#${CSS.escape(target.dataset.readerTarget)}`);
+    if (!heading) return;
+    setReaderContentsOpen(false);
+    heading.tabIndex = -1;
+    heading.scrollIntoView({ behavior: state.motionReduced ? "instant" : "smooth", block: "start" });
+    focusWithoutScroll(heading);
+  });
+  $("#reader-dialog").addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !$("#reader-dialog").classList.contains("is-contents-open")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setReaderContentsOpen(false);
+    focusWithoutScroll($("#reader-contents-toggle"));
+  });
+  $("#reader-dialog").addEventListener("cancel", (event) => {
+    if (!$("#reader-dialog").classList.contains("is-contents-open")) return;
+    event.preventDefault();
+    setReaderContentsOpen(false);
+    focusWithoutScroll($("#reader-contents-toggle"));
   });
   $("#reader-dialog").addEventListener("close", () => {
     if ($("#reader-dialog").open) return;
+    setReaderContentsOpen(false);
     readerRequestToken++;
     state.readerItem = null;
   });
 
   // The report form opens from ON TOP of the record dialog, so closing it must
   // not restore the search panel - the record is still open behind it.
+  wireSavedBackup();
   ["#artifact-dialog", "#reader-dialog", "#pdf-dialog", "#contribute-dialog",
-   "#report-dialog"].forEach((id) => {
+   "#report-dialog", "#saved-backup-dialog"].forEach((id) => {
     wireDialogDismissal($(id));
     $(id).addEventListener("close", () => {
       syncDialogScrollLock();
       // Finish iframe/player cleanup before requesting a history traversal.
       if (["#artifact-dialog", "#reader-dialog", "#pdf-dialog"].includes(id)) queueMicrotask(dismissDocumentHistory);
-      if (id !== "#contribute-dialog" && id !== "#report-dialog") requestAnimationFrame(restoreGlobalSearch);
+      if (!["#contribute-dialog", "#report-dialog", "#saved-backup-dialog"].includes(id)) requestAnimationFrame(restoreGlobalSearch);
     });
   });
   // Dismissing a modal only hides it. An iframe inside a hidden dialog keeps
@@ -1816,6 +1980,10 @@ function toggleInSet(set, value) {
 
 async function handleViewClick(event) {
   if (handleDiscoveryClick(event)) return;
+  if (event.target.closest("[data-saved-backup]")) {
+    openSavedBackup();
+    return;
+  }
   const roomFilterTarget = event.target.closest("[data-room-filter]");
   if (roomFilterTarget) {
     applyRoomFilter(roomFilterTarget.dataset.roomFilter);
@@ -1980,7 +2148,7 @@ function setSavedMode(mode) {
   if (!SAVED_MODES.includes(mode) || mode === state.savedMode) return;
   rememberArchiveYear();
   state.savedMode = mode;
-  history.pushState({ archiveYear: selectedArchiveYear() }, "", archiveViewUrl());
+  history.pushState({ archiveYear: selectedArchiveYear(), archiveView: viewHash() }, "", archiveViewUrl());
   handledRouteUrl = location.href;
   render();
 }
@@ -1998,8 +2166,8 @@ async function setView(view, updateHash = true) {
   setMobileMenuOpen(false);
   if (updateHash) {
     const url = new URL(archiveViewUrl());
-    url.searchParams.delete("year");
-    history.pushState({ archiveYear: selectedArchiveYear() }, "", url.href);
+    if (view !== "desk") url.searchParams.delete("year");
+    history.pushState({ archiveYear: selectedArchiveYear(), archiveView: viewHash() }, "", url.href);
     handledRouteUrl = location.href;
   }
   render();
@@ -2149,6 +2317,7 @@ function restoreViewFocus(focus) {
 }
 
 function render() {
+  cancelStaleShortlistPreparation();
   const focus = captureViewFocus();
   const copy = viewCopy();
   // The document-level palette also owns native controls such as scrollbars.
@@ -2202,6 +2371,7 @@ function updateGlobalSearch() {
     : complete
       ? `${results.length.toLocaleString()} result${results.length === 1 ? "" : "s"} for “${state.query}”`
       : `${results.length.toLocaleString()} result${results.length === 1 ? "" : "s"} so far · loading ${YEAR_FILES.length - loadedCollections.size} collection(s)…`;
+  if (results.length > 40) $("#global-results-label").textContent += " · showing the first 40";
   // YEAR, TITLE, RESEARCHER. The name sits under the title rather than beside
   // the publisher, because the two are not the same fact and the narrow layout
   // drops the trailing column entirely: fusing them meant a phone showed the
@@ -2215,9 +2385,10 @@ function updateGlobalSearch() {
           <div><strong>${h(item.title)}</strong>${item.summary ? `<p>${h(item.summary)}</p>` : ""}${names ? `<em>${h(names)}</em>` : ""}</div>
           <small>${h(item.publisher || item.topic)}${videoMark(item, "result-video")}</small>
         </button>`;
-      }).join("") + (results.length > 40 ? `<p>Showing the first 40 results. Add another word to narrow the index.</p>` : "")
+      }).join("")
     : `<p>No archive records matched those words. A word can name its field —
        <b>author:</b>, <b>publisher:</b>, <b>title:</b>, <b>year:</b>, <b>topic:</b> or <b>tag:</b>.</p>`;
+  $("#global-results-list").insertAdjacentHTML("afterbegin", `<p>${results.length > 40 ? `Showing the first 40 of ${results.length.toLocaleString()} results${complete ? "" : " so far"}. ` : ""}<a data-desk-handoff href="${h(deskShareUrl({ ...deskRouteState(""), deskQuery: state.query }))}">View all results in Research Desk</a></p>`);
   panel.hidden = false;
 }
 
@@ -2324,6 +2495,7 @@ function wireDialogDismissal(dialog) {
 }
 
 function setMetric(count, label) {
+  $("#view-status-name").textContent = `${viewCopy().title}: `;
   $("#view-count").textContent = Number(count).toLocaleString();
   $("#view-count-label").textContent = label;
 }
@@ -2443,14 +2615,21 @@ function setFavouriteState(item, nextState = !state.favouriteKeys.has(item?.favo
 
 const failedReadingWrites = new Set();
 const pendingReadingWrites = new Map();
-function persistReadingState(key, itemKey, value) {
+function updateReadingStorageNotice() {
+  [$("#storage-status"), ...$$("[data-storage-status]")].forEach((notice) => {
+    notice.hidden = failedReadingWrites.size === 0;
+    notice.textContent = notice.hidden ? "" : "Some saved or read changes are session only because browser storage is unavailable. Reloading may lose these changes.";
+  });
+}
+
+function persistReadingState(key, itemKey, value, {refresh = true, retry = true} = {}) {
   if (!validReadingKey(itemKey) || typeof value !== "boolean") return false;
   // One atomic key per record: unrelated concurrent edits cannot overwrite each
   // other. False values are tombstones overriding legacy arrays, never unions.
   // Edits to the same record use the last successful localStorage write.
   const currentName = `${key}:item:${itemKey}`;
   pendingReadingWrites.set(currentName, value);
-  for (const [name, pending] of pendingReadingWrites) {
+  for (const [name, pending] of retry ? pendingReadingWrites : [[currentName, value]]) {
     if (!name.startsWith(`${key}:item:`)) continue;
     try {
       localStorage.setItem(name, String(pending));
@@ -2460,12 +2639,158 @@ function persistReadingState(key, itemKey, value) {
   const listPersisted = ![...pendingReadingWrites.keys()].some(name => name.startsWith(`${key}:item:`));
   if (listPersisted) failedReadingWrites.delete(key);
   else failedReadingWrites.add(key);
-  synchronizeReadingState();
-  [$("#storage-status"), ...$$("[data-storage-status]")].forEach((notice) => {
-    notice.hidden = failedReadingWrites.size === 0;
-    notice.textContent = notice.hidden ? "" : "Some saved or read changes are session only because browser storage is unavailable. Reloading may lose these changes.";
-  });
+  if (refresh) { synchronizeReadingState(); updateReadingStorageNotice(); }
   return !pendingReadingWrites.has(currentName);
+}
+
+// Capture explicit per-record booleans separately from the legacy positive
+// arrays. Removals must survive a round trip, and pending edits win locally.
+function readingRecordValues() {
+  const values = new Map();
+  // Probe legacy-list access even in an empty store: some browsers deny getItem
+  // while still allowing length/key, which cannot prove a complete snapshot.
+  localStorage.getItem(READ_STORAGE_KEY);
+  localStorage.getItem(FAVOURITE_STORAGE_KEY);
+  for (let index = 0; index < localStorage.length; index++) {
+    const name = localStorage.key(index);
+    if (![READ_STORAGE_KEY, FAVOURITE_STORAGE_KEY].some(key => name?.startsWith(`${key}:item:`))) continue;
+    const value = localStorage.getItem(name);
+    if (value === "true" || value === "false") values.set(name, value === "true");
+  }
+  for (const [name, value] of pendingReadingWrites) values.set(name, value);
+  return values;
+}
+
+function savedBackupText() {
+  const values = readingRecordValues(); // Fail clearly if a complete snapshot cannot be read.
+  synchronizeReadingState();
+  const removals = key => [...values].filter(([name, value]) => !value && name.startsWith(`${key}:item:`)).map(([name]) => name.slice(`${key}:item:`.length));
+  return SavedStateBackup.serialize(state.readKeys, state.favouriteKeys, removals(READ_STORAGE_KEY), removals(FAVOURITE_STORAGE_KEY));
+}
+
+function mergeSavedBackup(backup, mode) {
+  const writes = SavedStateBackup.plan(backup, mode);
+  const explicit = readingRecordValues(); // No writes if storage cannot be read safely.
+  synchronizeReadingState();
+  const retried = new Set();
+  let applied = 0, kept = 0;
+  for (const {flag, identity, value} of writes) {
+    const key = flag === "read" ? READ_STORAGE_KEY : FAVOURITE_STORAGE_KEY;
+    const name = `${key}:item:${identity}`;
+    if (mode === "add" && (explicit.get(name) === false || pendingReadingWrites.has(name))) { kept++; continue; }
+    const keys = flag === "read" ? state.readKeys : state.favouriteKeys;
+    if (value) keys.add(identity); else keys.delete(identity);
+    persistReadingState(key, identity, value, {refresh: false, retry: !retried.has(key)});
+    retried.add(key);
+    applied++;
+  }
+  synchronizeReadingState();
+  updateReadingStorageNotice();
+  return {applied, kept, pending: pendingReadingWrites.size};
+}
+
+let savedBackupPreview = null;
+let savedBackupReadToken = 0;
+function resetSavedBackupPreview() {
+  ++savedBackupReadToken;
+  savedBackupPreview = null;
+  $("#saved-backup-file").value = "";
+  $("#saved-backup-preview").hidden = true;
+  $("#saved-backup-apply").disabled = true;
+  $$("[name='saved-backup-mode']").forEach(input => { input.checked = false; });
+  $("#saved-backup-identities").replaceChildren();
+}
+
+function openSavedBackup() {
+  resetSavedBackupPreview();
+  $("#saved-backup-status").textContent = "";
+  const dialog = $("#saved-backup-dialog");
+  dialog.dataset.view = state.view;
+  showLockedModal(dialog);
+  dialog.scrollTop = 0;
+  focusWithoutScroll(dialog.querySelector(".dialog-close"));
+}
+
+async function previewSavedBackupFile(file) {
+  resetSavedBackupPreview();
+  const token = savedBackupReadToken;
+  const status = $("#saved-backup-status");
+  if (!file) { status.textContent = "No file selected. Your state is unchanged."; return; }
+  status.textContent = "Reading backup on this device…";
+  try {
+    if (file.size > SavedStateBackup.MAX_BYTES) throw Error("Choose a JSON file no larger than 1 MiB.");
+    const backup = SavedStateBackup.parse(await file.text());
+    if (token !== savedBackupReadToken || !$("#saved-backup-dialog").open) return;
+    synchronizeReadingState();
+    let conflicts = 0;
+    for (const {flag, identity, value} of SavedStateBackup.plan(backup, "restore")) {
+      const keys = flag === "read" ? state.readKeys : state.favouriteKeys;
+      if (keys.has(identity) !== value) conflicts++;
+    }
+    savedBackupPreview = backup;
+    $("#saved-backup-summary").textContent = `${backup.identities.size} identities: ${backup.read.size} read, ${backup.favourites.size} favourites, ${backup.unread.size} unread removals, ${backup.unfavourited.size} favourite removals. ${backup.duplicates} duplicate entries combined. ${conflicts} file values differ from this browser's current marks. Showing up to 20 identities; identities outside the current archive are retained.`;
+    const list = $("#saved-backup-identities");
+    for (const identity of [...backup.identities].slice(0, 20)) {
+      const li = document.createElement("li");
+      li.textContent = identity; // Never turn imported text into markup or links.
+      list.append(li);
+    }
+    $("#saved-backup-preview").hidden = false;
+    status.textContent = backup.identities.size ? "Preview ready. Choose a merge rule, then confirm to change your state." : "This backup is empty. Your state is unchanged.";
+    $("#saved-backup-merge").disabled = !backup.identities.size;
+  } catch (error) {
+    if (token !== savedBackupReadToken) return;
+    status.textContent = `Backup could not be read: ${error.message || "file access is unavailable"} Your state is unchanged.`;
+  }
+}
+
+function wireSavedBackup() {
+  $("#saved-backup-dialog").addEventListener("close", resetSavedBackupPreview);
+  $("#saved-backup-file").addEventListener("change", event => previewSavedBackupFile(event.target.files?.[0]));
+  $("#saved-backup-file").addEventListener("cancel", () => {
+    resetSavedBackupPreview();
+    $("#saved-backup-status").textContent = "File selection cancelled. Your state is unchanged.";
+  });
+  $("#saved-backup-merge").addEventListener("change", () => {
+    $("#saved-backup-apply").disabled = !savedBackupPreview?.identities.size || !$('[name="saved-backup-mode"]:checked');
+  });
+  $("#saved-backup-cancel").addEventListener("click", () => {
+    resetSavedBackupPreview();
+    $("#saved-backup-status").textContent = "Import cancelled. Your state is unchanged.";
+    $("#saved-backup-file").scrollIntoView({block: "nearest", behavior: "instant"});
+    focusWithoutScroll($("#saved-backup-file"));
+  });
+  $("#saved-backup-export").addEventListener("click", () => {
+    let url;
+    try {
+      url = URL.createObjectURL(new Blob([savedBackupText()], {type: "application/json"}));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "webhacklist-reading-state-v1.json";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      $("#saved-backup-status").textContent = "JSON backup download requested. Save the file to keep it; browser download settings may block or cancel it.";
+    } catch (error) {
+      $("#saved-backup-status").textContent = `Backup could not be downloaded: ${error.message || "browser access is unavailable"} Your state is unchanged.`;
+    } finally { if (url) setTimeout(() => URL.revokeObjectURL(url), 1000); }
+  });
+  $("#saved-backup-apply").addEventListener("click", () => {
+    const mode = $('[name="saved-backup-mode"]:checked')?.value;
+    if (!savedBackupPreview?.identities.size || !mode) return;
+    try {
+      const result = mergeSavedBackup(savedBackupPreview, mode);
+      resetSavedBackupPreview();
+      updateReadingProgress();
+      updateFavouriteCount();
+      render();
+      $("#saved-backup-status").textContent = `Import applied: ${result.applied} values, ${result.kept} local removals or pending edits kept.${result.pending ? ` ${result.pending} changes remain session only because browser storage is unavailable; reloading may lose them. Download a backup to preserve them.` : " All applied values were written to this browser's storage."}`;
+      $("#saved-backup-status").scrollIntoView({block: "nearest", behavior: "instant"});
+      focusWithoutScroll($("#saved-backup-status"));
+    } catch (error) {
+      $("#saved-backup-status").textContent = `Import could not be applied: ${error.message || "browser storage is unavailable"} Your state is unchanged.`;
+    }
+  });
 }
 
 function synchronizeReadingStorage(event) {
@@ -2496,8 +2821,8 @@ function synchronizeReadingStorage(event) {
 }
 
 function synchronizeReadingState() {
-  state.readKeys = loadReadKeys();
-  state.favouriteKeys = loadFavouriteKeys();
+  state.readKeys = loadStoredKeys(READ_STORAGE_KEY, state.readKeys);
+  state.favouriteKeys = loadStoredKeys(FAVOURITE_STORAGE_KEY, state.favouriteKeys);
   for (const [name, value] of pendingReadingWrites) {
     for (const [key, values] of [[READ_STORAGE_KEY, state.readKeys], [FAVOURITE_STORAGE_KEY, state.favouriteKeys]]) {
       if (!name.startsWith(`${key}:item:`)) continue;
@@ -3000,6 +3325,7 @@ function renderFavourites() {
       <div class="saved-modes" role="group" aria-label="Choose a personal collection">
         ${SAVED_MODES.map((mode) => `<button type="button" class="${state.savedMode === mode ? "active" : ""}" data-saved-mode="${mode}" aria-pressed="${state.savedMode === mode}">${h(SAVED_MODE_COPY[mode].label)} <b>${counts[mode].toLocaleString()}</b></button>`).join("")}
       </div>
+      <div class="saved-backup-entrance"><button type="button" data-saved-backup>Back up or import saved state</button><p>Move your read and favourite lists between browsers with a local JSON file.</p></div>
       ${all.length ? `<div class="favourite-filters">
         <div role="group" aria-label="Filter by one or more years"><span>Years</span><button type="button" class="${selectedYearCount ? "" : "active"}" data-saved-year="all" aria-pressed="${!selectedYearCount}">All years <b>${all.length}</b></button>${yearRecords.map((record) => {
           const active = state.savedYears.has(record.id);
@@ -3662,7 +3988,8 @@ function renderConstellation() {
       <p class="eyebrow">Drag to steer · release carries direction and speed · right-click to pause or resume</p>
     </div>
     ${preliminaryNotice(state.starYear)}
-    <section class="constellation-frame space-3d" id="constellation-space" tabindex="0" aria-label="Navigable three-dimensional research constellation. Drag in any direction to set the continuing orbit direction. Right-click to pause or resume rotation.">
+    <section class="constellation-frame space-3d" id="constellation-space" tabindex="0" aria-describedby="space-selection-status space-key-help" aria-keyshortcuts="PageUp PageDown Home End Enter" aria-label="Navigable three-dimensional research constellation. Page Up and Page Down select research; Home and End select the first and last record; Enter inspects the selection. Arrow keys move the camera. Drag in any direction to set the continuing orbit direction. Right-click to pause or resume rotation.">
+      <span id="space-selection-status" class="sr-only" role="status" aria-atomic="true">No research selected.</span>
       <canvas id="constellation-canvas" class="constellation-canvas"></canvas>
       <div class="space-reticle" aria-hidden="true"><i></i><i></i></div>
       <div class="space-coordinates">
@@ -3707,6 +4034,10 @@ function renderConstellation() {
         <p id="space-selection-publisher"></p>
         <div><button id="space-open-artifact">Inspect artifact</button><button id="space-favourite-artifact">☆ Add favourite</button><button id="space-fly-artifact">Fly closer</button></div>
       </aside>
+      <div class="space-help"><span><kbd>Page Up / Down</kbd> select research</span><span><kbd>Home / End</kbd> first / last</span><span><kbd>Enter</kbd> inspect</span><span><kbd>Drag + release</kbd> set direction + speed</span><span><kbd>Shift + drag</kbd> pan</span><span><kbd>Right-click</kbd> pause / resume</span><span><kbd>Wheel / pinch</kbd> zoom</span></div>
+    </section>
+    <p id="space-key-help" class="space-key-help">Keyboard: Page Up / Down select research; Home / End select first / last; Enter inspects; arrow keys move the camera.</p>
+    <div class="constellation-filters" aria-label="Constellation filters">
       <div class="sky-legend">
         <button class="${state.starTopic === "all" ? "active" : ""}" data-topic-filter="all" aria-pressed="${state.starTopic === "all"}" style="--topic-color:#edf9f1">ALL</button>
         ${TOPICS.map((topic) => `<button class="${state.starTopic === topic.name ? "active" : ""}" data-topic-filter="${h(topic.name)}" aria-pressed="${state.starTopic === topic.name}" style="--topic-color:${h(topic.color)}">${h(topic.name.toUpperCase())}</button>`).join("")}
@@ -3718,8 +4049,7 @@ function renderConstellation() {
           <button class="${state.starStatus === "nominee" ? "active" : ""}" data-star-status="nominee" aria-pressed="${state.starStatus === "nominee"}" ${otherCount ? "" : "disabled"}><span class="full-label">Other research</span><span class="short-label">Rest</span> <b>${otherCount}</b></button>
           ${recordedFilterButton(recordedHere)}
         </div>`}
-      <div class="space-help"><span><kbd>Drag + release</kbd> set direction + speed</span><span><kbd>Shift + drag</kbd> pan</span><span><kbd>Right-click</kbd> pause / resume</span><span><kbd>Wheel / pinch</kbd> zoom</span></div>
-    </section>`;
+    </div>`;
 
   if (constellationExperience) constellationExperience.destroy();
   if (!window.Constellation3D) {
@@ -4901,6 +5231,12 @@ function markdownDocument(markdown) {
 // `options.original` opens the source-language file of a translated reference.
 // Everything else about the view is identical - it is the same preserved
 // document, in the words the author wrote it in.
+function setReaderContentsOpen(open) {
+  $("#reader-dialog").classList.toggle("is-contents-open", Boolean(open));
+  $("#reader-contents-toggle")?.setAttribute("aria-expanded", String(Boolean(open)));
+  $("#reader-scroll").inert = Boolean(open);
+}
+
 async function openReader(item, options = {}) {
   if (documentDismissal) await documentDismissal;
   const showOriginal = Boolean(options.original && item?.originalMdPath);
@@ -4930,6 +5266,7 @@ async function openReader(item, options = {}) {
   $("#reader-actions").innerHTML = `
     ${item.pdfPath ? `<button id="reader-open-pdf" type="button">▧ PDF</button>` : ""}
     <button id="reader-sources" type="button">Sources &amp; details</button>
+    <button class="reader-mobile-contents" id="reader-contents-toggle" type="button" aria-controls="reader-sidebar" aria-expanded="false">Contents</button>
     <button class="reading-theme-toggle" id="reader-theme-toggle" type="button" aria-label="Switch to light reading theme">☀ Light</button>
     <button id="reader-share" type="button" title="Share this exact Markdown view">⌁ Share</button>
     <button id="reader-read-toggle" type="button" aria-pressed="${item.read}">${item.read ? "✓ Read" : "○ Mark as read"}</button>
@@ -4938,6 +5275,12 @@ async function openReader(item, options = {}) {
     ${item.originalMdPath ? `<button id="reader-language-toggle" type="button">${showOriginal ? "⇄ English" : `⇄ ${h(item.language ? item.language.toUpperCase() : "Original language")}`}</button>` : ""}
     ${originalUrl ? `<a href="${h(originalUrl)}" target="_blank" rel="noopener noreferrer">Original ↗</a>` : `<span class="disabled">Original blocked</span>`}`;
   $("#reader-theme-toggle").addEventListener("click", toggleReadingTheme);
+  setReaderContentsOpen(false);
+  $("#reader-contents-toggle").addEventListener("click", () => {
+    const open = !$("#reader-dialog").classList.contains("is-contents-open");
+    setReaderContentsOpen(open);
+    if (open) { $("#reader-sidebar").scrollTop = 0; $("#reader-toc button")?.focus(); }
+  });
   $("#reader-sources").addEventListener("click", () => openSourceDetails(item));
   $("#reader-share").addEventListener("click", () => shareDocument(item, "reader"));
   $("#reader-read-toggle").addEventListener("click", () => setReadState(item));

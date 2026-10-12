@@ -35,6 +35,32 @@ for target, output in (('cloudflare', 'dist'), ('github', '_site')):
     run('node', 'website/build-site.mjs', '--target', target, '--output', output)
     if not (root / output / 'index.html').is_file():
         raise RuntimeError('Missing staged index for ' + target)
+    if target == 'cloudflare' and not (root / output / 'saved-state.js').is_file():
+        raise RuntimeError('Missing saved-state backup asset for ' + target)
+    if target == 'github' and (root / output / 'saved-state.js').exists():
+        raise RuntimeError('Backup UI must stay on the app origin, not the isolated reader origin')
+    if target == 'cloudflare' and not (root / output / 'shortlist.js').is_file():
+        raise RuntimeError('Missing shortlist bibliography asset')
+    if target == 'github' and (root / output / 'shortlist.js').exists():
+        raise RuntimeError('Shortlist UI must stay on the app origin')
+    for relative, source in (('licence.txt', root / 'LICENSE'),
+                             ('reuse.html', root / 'website/reuse.html'),
+                             ('reuse.css', root / 'website/reuse.css')):
+        asset = root / output / relative
+        if target == 'cloudflare' and (not asset.is_file() or asset.read_bytes() != source.read_bytes()):
+            raise RuntimeError('Missing or changed reuse terms: ' + relative)
+        if target == 'github' and asset.exists():
+            raise RuntimeError('Reuse guidance must stay on the app origin: ' + relative)
+    if target == 'cloudflare':
+        headers = (root / output / '_headers').read_text()
+        if '/licence.txt\n  Cache-Control: public, max-age=0, must-revalidate\n  Content-Type: text/plain; charset=utf-8' not in headers:
+            raise RuntimeError('MIT licence must serve as plain text with revalidation')
+    for icon in ('install-192.png', 'install-512.png', 'install-maskable-512.png', 'apple-touch-icon.png'):
+        asset = root / output / icon
+        if target == 'cloudflare' and (not asset.is_file() or asset.read_bytes() != (root / 'website' / icon).read_bytes()):
+            raise RuntimeError('Missing or changed install icon: ' + icon)
+        if target == 'github' and asset.exists():
+            raise RuntimeError('Install icons must stay on the app origin: ' + icon)
     if target == 'github' and sum(p.stat().st_size for p in (root / output).rglob('*') if p.is_file()) >= 1_000_000_000:
         raise RuntimeError('GitHub Pages artifact exceeds 1 GB')
     shutil.rmtree(root / output)
@@ -53,6 +79,7 @@ def main():
         shutil.copytree(ROOT / "website", stage / "website",
                         ignore=shutil.ignore_patterns("data", "node_modules", ".tmp", ".env*", "__pycache__"))
         shutil.copyfile(ROOT / ".gitignore", stage / ".gitignore")
+        shutil.copyfile(ROOT / "LICENSE", stage / "LICENSE")
         for source in ROOT.glob("*.md"):
             if re.fullmatch(r"\d{4}(?:-\d{2}|-ai)?\.md", source.name) or source.name in ("README.md", "CONTRIBUTING.md"):
                 shutil.copyfile(source, stage / source.name)

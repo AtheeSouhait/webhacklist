@@ -139,6 +139,8 @@ const mockupFiles = [
   "website/social-preview.png",
   "website/styles.css",
   "website/app.js",
+  "website/saved-state.js",
+  "website/shortlist.js",
   "website/discovery.js",
   "website/discovery.css",
   "website/constellation.js",
@@ -173,6 +175,7 @@ const headersSource = await readFile(path.join(root, "website/_headers"), "utf8"
 const notFoundSource = await readFile(path.join(root, "website/404.html"), "utf8");
 const clientContext = vm.createContext({
   URL,
+  URLSearchParams,
   location: { href: "https://archive.example/website/#museum" },
   localStorage: { getItem: () => null, setItem: () => {} },
   document: { querySelector: () => null, querySelectorAll: () => [] },
@@ -529,7 +532,7 @@ const tagClickBehaviour = JSON.parse(clientEval(`(() => {
   const originalQuery = state.query;
   const search = { value: "" };
   const label = { textContent: "" };
-  const list = { innerHTML: "", scrollTop: -1 };
+  const list = { innerHTML: "", scrollTop: -1, insertAdjacentHTML(position, html) { this.innerHTML = position === "afterbegin" ? html + this.innerHTML : this.innerHTML + html; } };
   const panel = { hidden: true, focused: false, focus() { this.focused = true; } };
   const dialog = { open: true, closed: false, close() { this.open = false; this.closed = true; } };
   const elements = new Map([
@@ -759,7 +762,7 @@ const securityChecks = [
   // connection host is opened up for it.
   !indexSource.includes("ytimg") && !headersSource.includes("ytimg")
     && !headersSource.includes("script-src 'self' https://"),
-  pdfReaderHtmlSource.includes("default-src 'none'") && pdfReaderHtmlSource.includes("worker-src 'self'") && pdfReaderHtmlSource.includes("font-src data: blob:"),
+  pdfReaderHtmlSource.includes("default-src 'none'") && pdfReaderHtmlSource.includes("worker-src 'self'") && pdfReaderHtmlSource.includes("font-src 'self' data: blob:"),
   pdfReaderSource.includes('import "./pdf-reader-polyfills.mjs"') && pdfReaderSource.includes('import { safePdfUrl } from "./pdf-reader-url.mjs"') && pdfReaderSource.includes("isEvalSupported: false"),
   pdfReaderSource.includes('new URL("pdf-worker.mjs", PDFJS_ROOT)') && pdfReaderSource.includes('import { PDFJS_ROOT } from "./pdfjs-release.mjs"') && pdfWorkerSource.includes('import "./pdf-reader-polyfills.mjs"'),
   ["Promise.withResolvers", "Promise.try", "Uint8Array.fromBase64", "toBase64", "toHex", "Math.sumPrecise", "Set.prototype.intersection", "transferToFixedLength", "AbortSignal.any", "Response.prototype.bytes"].every((name) => pdfReaderPolyfillsSource.includes(name)),
@@ -845,7 +848,7 @@ const experienceChecks = [
   indexSource.includes('<h1 class="brand-copy"><strong>WEB HACKING</strong><b>TECHNIQUES INDEX</b>'),
   (indexSource.match(/<h1[ >]/g) || []).length === 2, // the masthead, plus the boot screen app.js removes
   indexSource.includes('<h2 class="view-mode" id="view-mode">'),
-  !indexSource.includes("view-title"),
+  !indexSource.includes('id="view-title"'),
   !appSource.includes("#view-title"),
   !stylesSource.includes(".view-intro h1"),
   appSource.includes('$("#view-mode").textContent = copy.title'),
@@ -944,8 +947,11 @@ const webManifest = JSON.parse(await readFile(path.join(root, "website/site.webm
 const metaContent = (name) => (indexSource.match(new RegExp(`<meta (?:name|property)="${name}" content="([^"]*)"`)) || [])[1];
 const documentTitle = (indexSource.match(/<title>([^<]*)<\/title>/) || [])[1] || "";
 const viewTitles = Object.values(JSON.parse(clientEval("JSON.stringify(VIEWS)"))).map((view) => view.title);
-const interfaceAssetVersions = [...indexSource.matchAll(/(?:href|src)="(?:styles\.css|app\.js|constellation\.js|discovery\.(?:js|css))\?v=(\d{8}\.\d+)"/g)].map((match) => match[1]);
+const interfaceAssetVersions = [...indexSource.matchAll(/(?:href|src)="(?:styles\.css|app\.js|saved-state\.js|shortlist\.js|constellation\.js|discovery\.(?:js|css))\?v=(\d{8}\.\d+)"/g)].map((match) => match[1]);
 const appAssetVersion = (indexSource.match(/src="app\.js\?v=(\d{8}\.\d+)"/) || [])[1];
+// The isolated PDF reader has its own release cadence; a shell-only change
+// need not invalidate its CSS/script. Its two reader entrypoints must agree.
+const pdfAssetVersion = (pdfReaderHtmlSource.match(/src="pdf-reader\.mjs\?v=(\d{8}\.\d+)"/) || [])[1];
 const deploymentChecks = [
   structuredData?.["@type"] === "WebSite",
   structuredData?.name === SITE_NAME,
@@ -999,7 +1005,7 @@ const deploymentChecks = [
   // stands in for the size no HEAD request will report.
   appSource.includes("state.pdfBytes = Number(ARCHIVE_CATALOGUE?.hosting?.cloudflareMaxAssetBytes) || 0;"),
   indexSource.includes('id="pdf-fallback-open"'),
-  interfaceAssetVersions.length === 5 && Boolean(appAssetVersion),
+  interfaceAssetVersions.length === 7 && Boolean(appAssetVersion),
   (indexSource.match(/id="mobile-menu-backdrop"/g) || []).length === 1,
   appSource.includes('$("#mobile-menu-backdrop").addEventListener("click", () => {') && appSource.includes('focusWithoutScroll($("#mobile-menu"))'),
   stylesSource.includes("body.menu-open .mobile-menu-backdrop") && stylesSource.includes("pointer-events: auto"),
@@ -1009,14 +1015,14 @@ const deploymentChecks = [
   indexSource.includes('id="pdf-links-backdrop"') && indexSource.includes('id="pdf-links-toggle" type="button" aria-controls="pdf-links"'),
   appSource.includes('$("#pdf-dialog").addEventListener("cancel"') && appSource.includes('$("#pdf-links-backdrop").hidden = !show'),
   stylesSource.includes(".pdf-links-backdrop[hidden] { display: none; }") && stylesSource.includes(".pdf-links header button { width: 42px; height: 42px; }"),
-  pdfReaderHtmlSource.includes(`src="pdf-reader.mjs?v=${appAssetVersion}"`) && pdfReaderHtmlSource.includes(`href="pdf-reader.css?v=${appAssetVersion}"`),
+  Boolean(pdfAssetVersion) && pdfReaderHtmlSource.includes(`href="pdf-reader.css?v=${pdfAssetVersion}"`),
   pdfReaderCssSource.includes("overscroll-behavior: contain") && pdfReaderCssSource.includes("-webkit-overflow-scrolling: touch"),
   stylesSource.includes("body.document-dialog-open") && stylesSource.includes("overscroll-behavior: contain"),
   stylesSource.includes(".reader-dialog[open] { display: grid") && stylesSource.includes(".pdf-dialog[open] { display: grid"),
   stylesSource.includes(".markdown-body a { color: var(--document-accent); overflow-wrap: anywhere"),
   indexSource.indexOf('id="pdf-new-tab"') < indexSource.indexOf('id="pdf-theme-toggle"'),
-  // record, reader, PDF, contribute, report
-  (indexSource.match(/<dialog\b[^>]*tabindex="-1"/g) || []).length === 5,
+  // record, reader, PDF, contribute, report, saved-state backup
+  (indexSource.match(/<dialog\b[^>]*tabindex="-1"/g) || []).length === 6,
   stylesSource.includes(".investigation-board { display: grid; width: 100%; min-height: 0 !important; grid-template-columns: minmax(0,1fr)"),
   stylesSource.includes("main:fullscreen .favourites-view"),
   stylesSource.includes("main:fullscreen .museum-map"),

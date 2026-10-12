@@ -22,13 +22,20 @@ from refslib import toolbox
 IMAGE = "webseclist-browser-tests:source-workers-4"
 CROSS_IMAGE = "webseclist-browser-tests:cross-browser-1.55.0"
 BROWSERS = ("chromium", "chrome", "msedge", "firefox", "webkit")
-SUITES = ("smoke-test.mjs", "theme-test.mjs", "discovery-test.mjs", "review-browser-test.mjs", "pdf-state-test.mjs", "interface-test.mjs",
+SUITES = ("smoke-test.mjs", "theme-test.mjs", "discovery-test.mjs", "shareable-discovery-test.mjs", "entrance-test.mjs", "saved-portability-test.mjs", "shortlist-browser-test.mjs", "installation-test.mjs", "review-browser-test.mjs", "pdf-state-test.mjs", "interface-test.mjs",
           "dialog-test.mjs", "history-test.mjs", "year-history-test.mjs", "sources-test.mjs", "article-scroll-test.mjs", "mobile-test.mjs",
-          "accessibility-test.mjs", "preview-test.mjs", "vendor-cache-test.mjs")
+          "accessibility-test.mjs", "accessibility-cases-test.mjs", "preview-test.mjs", "vendor-cache-test.mjs")
 ADAPTER = '''import * as real from "/deps/node_modules/playwright/index.mjs";
 export const chromium = {launch: options => real.chromium.launch({...options,
  executablePath:"/usr/bin/chromium-browser", args:[...(options?.args || []),
  "--disable-dev-shm-usage"]})};
+'''
+PERSISTENT_ADAPTER = '''import fs from "node:fs";
+for (const name of ["playwright", "playwright-core"]) {
+ const info = JSON.parse(fs.readFileSync(`/opt/browser-tests/node_modules/${name}/package.json`, "utf8"));
+ if (info.version !== "1.55.0") throw Error("Installed image package version mismatch");
+}
+export * from "/opt/browser-tests/node_modules/playwright/index.mjs";
 '''
 BOOTSTRAP = '''import os,shutil,subprocess,time,urllib.request
 shutil.copytree('/work/website', '/tmp/work/website', ignore=shutil.ignore_patterns('data'))
@@ -64,12 +71,16 @@ def main():
     parser.add_argument("--suites", nargs="+", choices=SUITES,
                         help="optional focused suites; omit for the complete regression suite")
     parser.add_argument("--debug", action="store_true", help="include browser process and layout diagnostics")
+    parser.add_argument("--case-captures", action="store_true", help="emit bounded acceptance screenshots from the accessibility case suite")
     args = parser.parse_args()
     for name in ("playwright", "playwright-core", "axe-core"):
         if not (args.node_modules / name / "package.json").is_file():
             parser.error("missing approved test dependency: " + name)
     browsers = list(BROWSERS) if "all" in args.browsers else list(dict.fromkeys(args.browsers))
-    cross_browser = browsers != ["chromium"]
+    # The opt-in acceptance suite needs bundled Chromium's extension support
+    # and full persistent-context exports, rather than the legacy launch shim.
+    acceptance = "accessibility-cases-test.mjs" in (args.suites or [])
+    cross_browser = browsers != ["chromium"] or acceptance
     image = CROSS_IMAGE if cross_browser else IMAGE
     if cross_browser:
         for name in ("playwright", "playwright-core"):
@@ -93,6 +104,7 @@ def main():
         shutil.copytree(ROOT / "website", stage / "website",
                         ignore=shutil.ignore_patterns("data", "node_modules", ".tmp", ".env*", "__pycache__"))
         shutil.copyfile(ROOT / ".gitignore", stage / ".gitignore")
+        shutil.copyfile(ROOT / "LICENSE", stage / "LICENSE")
         (stage / "tools/references").mkdir(parents=True)
         shutil.copyfile(ROOT / "tools/references/related-sources.json", stage / "tools/references/related-sources.json")
         for path in ROOT.glob("*.md"):
@@ -101,7 +113,9 @@ def main():
         shutil.copytree(ROOT / ".github/ISSUE_TEMPLATE", stage / ".github/ISSUE_TEMPLATE")
         shutil.copyfile(ROOT / ".github/PULL_REQUEST_TEMPLATE.md", stage / ".github/PULL_REQUEST_TEMPLATE.md")
         adapter = scratch / "adapter.mjs"
-        adapter.write_text('export * from "/deps/node_modules/playwright/index.mjs";\n' if cross_browser else ADAPTER)
+        # The approved cross-browser image owns the matching runtime. Host
+        # dependency metadata is sufficient; entrypoints need not be present.
+        adapter.write_text(PERSISTENT_ADAPTER if cross_browser else ADAPTER)
         command = ["docker", "run"] + toolbox.run_args()
         command[command.index("--network") + 1] = "none"
         command[command.index("--memory") + 1] = "2g"
@@ -119,6 +133,8 @@ def main():
             command += ["-e", "WEBSEC_TEST_SUITES=" + ",".join(args.suites)]
         if args.debug:
             command += ["-e", "DEBUG=pw:browser", "-e", "WEBSEC_TEST_DEBUG=1"]
+        if args.case_captures:
+            command += ["-e", "WEBSEC_CASE_CAPTURE=1"]
         status = 0
         for browser in browsers:
             print("Running isolated browser matrix: " + browser, flush=True)

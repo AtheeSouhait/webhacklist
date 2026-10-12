@@ -35,6 +35,12 @@
 /app.js
   Cache-Control: public, max-age=0, must-revalidate
 
+/saved-state.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/shortlist.js
+  Cache-Control: public, max-age=0, must-revalidate
+
 /discovery.js
   Cache-Control: public, max-age=0, must-revalidate
 
@@ -46,6 +52,19 @@
 
 /styles.css
   Cache-Control: public, max-age=0, must-revalidate
+
+/reuse.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/reuse.css
+  Cache-Control: public, max-age=0, must-revalidate
+
+/licence.txt
+  Cache-Control: public, max-age=0, must-revalidate
+  Content-Type: text/plain; charset=utf-8
+
+/vendor/pdfjs/LICENSE
+  Content-Type: text/plain; charset=utf-8
 
 /pdf-reader.html
   Cache-Control: public, max-age=0, must-revalidate
@@ -83,6 +102,18 @@
   Access-Control-Allow-Origin: *
 
 /site.webmanifest
+  Cache-Control: public, max-age=0, must-revalidate
+
+/install-192.png
+  Cache-Control: public, max-age=0, must-revalidate
+
+/install-512.png
+  Cache-Control: public, max-age=0, must-revalidate
+
+/install-maskable-512.png
+  Cache-Control: public, max-age=0, must-revalidate
+
+/apple-touch-icon.png
   Cache-Control: public, max-age=0, must-revalidate
 
 /robots.txt

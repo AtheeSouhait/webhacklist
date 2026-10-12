@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import {launchBrowser} from "./browser-test.mjs";
+import {pdfjsReleaseFiles} from "./pdfjs-release-build.mjs";
 const browser = await launchBrowser();
 const url = process.env.WEBSEC_TEST_URL || "http://127.0.0.1:8000/website/";
 const views = ["desk", "time"];
@@ -16,6 +17,7 @@ const action = (name, value) => `[data-discovery-action="${name}"]${value === un
 async function go(view) {
   await page.goto(`${url}#${view}`);
   await page.waitForSelector(".discovery-record");
+  await page.waitForFunction(() => loadedCollections.size === YEAR_FILES.length);
   await page.waitForFunction(() => !document.querySelector("#boot-screen"));
 }
 async function closeDialog(id) {
@@ -157,29 +159,145 @@ try {
   assert.equal(await page.locator("html").getAttribute("data-view"), "time");
   await closeDialog("reader-dialog");
   const recoveryContext = await browser.newContext();
+  await recoveryContext.addInitScript(() => Object.defineProperty(navigator, "connection", {value:{saveData:true}, configurable:true}));
   let failCollection = true;
   await recoveryContext.route("**/data/collections/2024.json*", (route) => failCollection
     ? route.fulfill({status:503,body:"Simulated temporary failure"}) : route.continue());
   const recovery = await recoveryContext.newPage();
   await recovery.goto(`${url}#desk`);
   await recovery.waitForSelector('[data-discovery-action="retry"]');
+  await recovery.waitForFunction(() => !document.querySelector("#boot-screen"));
   failCollection = false;
   await recovery.locator('[data-discovery-action="retry"]').click();
-  await recovery.waitForSelector(".discovery-record");
+  await recovery.waitForFunction(() => loadedCollections.size === YEAR_FILES.length);
   assert.equal(await recovery.locator('[data-discovery-action="retry"]').count(), 0);
   await recoveryContext.close();
   console.log("Resilience: shared readers restore the view/theme and a failed collection recovers through Retry");
+
+  // Keep one real shard unresolved while other requests settle. Collection
+  // scope, rather than the speed of the whole archive, controls Desk readiness.
+  const progressiveContext = await browser.newContext();
+  await progressiveContext.addInitScript(() => Object.defineProperty(navigator, "connection", {value:{saveData:true}, configurable:true}));
+  let releaseSlow;
+  const slow = new Promise(resolve => { releaseSlow = resolve; });
+  let failOther = true, failSelected = true;
+  await progressiveContext.route("**/data/collections/2006.json*", async route => { await slow; await route.continue(); });
+  await progressiveContext.route("**/data/collections/2007.json*", route => failOther
+    ? route.fulfill({status:503,body:"Simulated unrelated failure"}) : route.continue());
+  await progressiveContext.route("**/data/collections/2023.json*", route => failSelected
+    ? route.fulfill({status:503,body:"Simulated selected failure"}) : route.continue());
+  const progressive = await progressiveContext.newPage();
+  const progressiveErrors = [];
+  progressive.on("pageerror", error => progressiveErrors.push(error.message));
+  await progressive.goto(`${url}?year=2024#desk`);
+  await progressive.waitForSelector(".discovery-record");
+  await progressive.evaluate(() => { void ensureCollection("2006").catch(() => {}); });
+  await progressive.waitForFunction(() => !document.querySelector("#boot-screen") && collectionRequests.has("2006"));
+  assert.ok((await progressive.locator(".discovery-meta").allTextContents()).every(text => text.includes("2024")));
+  assert.match(await progressive.locator("#desk-results").innerText(), /2024 collection fully loaded/);
+  assert.equal(await progressive.locator('[data-discovery-action="retry"]').count(), 0);
+  assert.equal(await progressive.evaluate(() => loadedCollections.size), 1, "selected Desk does not eagerly request every shard");
+
+  await progressive.selectOption("#desk-year", "all");
+  await progressive.waitForSelector('[data-discovery-action="retry"]');
+  assert.ok(await progressive.locator(".discovery-record").count(), "loaded records remain available after an unrelated failure");
+  assert.match(await progressive.locator("#desk-results").innerText(), /Results are incomplete.*Loading/s);
+  assert.doesNotMatch(await progressive.locator("#desk-results").innerText(), /Results are complete/);
+  await progressive.locator("#desk-query").fill("no-such-research-theme-progressive");
+  assert.match(await progressive.locator("#desk-results").innerText(), /No matching records in the loaded collections yet/);
+  await progressive.locator("#desk-query").fill("cache");
+  assert.match(await progressive.locator("#desk-result-count").innerText(), /results so far/);
+  const sourceDetails = progressive.locator('.discovery-record').first().locator('[data-artifact]').nth(1);
+  const focusedRecord = await sourceDetails.getAttribute("data-artifact");
+  await sourceDetails.focus();
+  await progressive.evaluate(() => discoveryRefresh());
+  assert.deepEqual(await progressive.evaluate(() => ({id:document.activeElement.dataset.artifact,text:document.activeElement.textContent})), {id:focusedRecord,text:await progressive.locator('.discovery-record').first().locator('[data-artifact]').nth(1).textContent()}, "refresh keeps the focused Sources & details button rather than the other artifact button");
+
+  // A failed selected collection must show no stale records from other years.
+  await progressive.selectOption("#desk-year", "2023");
+  await progressive.waitForFunction(() => discoveryState.errors.has("2023"));
+  assert.equal(await progressive.locator(".discovery-record").count(), 0);
+  assert.match(await progressive.locator("#desk-results").innerText(), /Could not load 2023/);
+  failSelected = false;
+  await progressive.locator('[data-discovery-action="retry"]').click();
+  await progressive.waitForFunction(() => loadedCollections.has("2023"));
+  assert.match(await progressive.locator("#desk-results").innerText(), /2023 collection fully loaded/);
+  assert.equal(await progressive.locator('[data-discovery-action="retry"]').count(), 0, "unrelated failures do not contaminate selected completeness");
+
+  await progressive.selectOption("#desk-year", "all");
+  await progressive.waitForSelector('[data-discovery-action="retry"]');
+  await progressive.locator("#desk-query").focus();
+  await progressive.locator("#desk-query").evaluate(input => input.setSelectionRange(1, 3, "backward"));
+  releaseSlow();
+  await progressive.waitForFunction(() => loadedCollections.has("2006") && !discoveryState.requests.has("2006"));
+  assert.deepEqual(await progressive.locator("#desk-query").evaluate(input => ({focused:document.activeElement === input,value:input.value,start:input.selectionStart,end:input.selectionEnd,direction:input.selectionDirection})), {focused:true,value:"cache",start:1,end:3,direction:"backward"}, "background shard refresh preserves query and caret selection");
+  failOther = false;
+  await progressive.locator('[data-discovery-action="retry"]').click();
+  await progressive.waitForFunction(() => loadedCollections.size === YEAR_FILES.length);
+  assert.match(await progressive.locator("#desk-results").innerText(), /All collections loaded. Results are complete/);
+  assert.doesNotMatch(await progressive.locator("#desk-result-count").innerText(), /so far/);
+  assert.deepEqual(progressiveErrors, []);
+  await progressiveContext.close();
+
+  // Direct selected-year failure exposes the Desk controls and Retry, rather
+  // than turning a recoverable shard failure into an archive boot failure.
+  const selectedContext = await browser.newContext();
+  let selectedFailure = true;
+  await selectedContext.route("**/data/collections/2024.json*", route => selectedFailure
+    ? route.fulfill({status:503,body:"Simulated direct selected failure"}) : route.continue());
+  const selected = await selectedContext.newPage();
+  await selected.goto(`${url}?year=2024#desk`);
+  await selected.waitForSelector('#desk-year');
+  await selected.waitForFunction(() => !document.querySelector("#boot-screen"));
+  assert.equal(await selected.locator("#desk-year").inputValue(), "2024");
+  assert.equal(await selected.locator(".discovery-record").count(), 0);
+  assert.match(await selected.locator("#desk-results").innerText(), /Could not load 2024/);
+  selectedFailure = false;
+  await selected.locator('[data-discovery-action="retry"]').click();
+  await selected.waitForFunction(() => loadedCollections.has("2024"));
+  assert.match(await selected.locator("#desk-results").innerText(), /2024 collection fully loaded/);
+  await selectedContext.close();
+
+  const timelineContext = await browser.newContext();
+  await timelineContext.addInitScript(() => Object.defineProperty(navigator, "connection", {value:{saveData:true}, configurable:true}));
+  let releaseTimeline;
+  const timelineSlow = new Promise(resolve => { releaseTimeline = resolve; });
+  let timelineFailure = true;
+  await timelineContext.route("**/data/collections/2006.json*", async route => { await timelineSlow; await route.continue(); });
+  await timelineContext.route("**/data/collections/2007.json*", route => timelineFailure
+    ? route.fulfill({status:503,body:"Simulated timeline failure"}) : route.continue());
+  const timeline = await timelineContext.newPage();
+  await timeline.goto(`${url}?year=2024#time`);
+  await timeline.waitForSelector('[data-discovery-action="retry"]');
+  await timeline.waitForFunction(() => !document.querySelector("#boot-screen"));
+  assert.equal(await timeline.locator(".time-stop").count(), 0, "timeline never presents incomplete annual comparisons");
+  assert.match(await timeline.locator("#view-root").innerText(), /Opening all collections for the timeline.*Results are incomplete/s);
+  timelineFailure = false;
+  await timeline.locator('[data-discovery-action="retry"]').click();
+  releaseTimeline();
+  await timeline.waitForSelector("#time-2024");
+  await timeline.waitForFunction(() => document.activeElement.id === "time-2024");
+  assert.equal(await timeline.evaluate(() => loadedCollections.size), await timeline.evaluate(() => YEAR_FILES.length));
+  assert.equal(await timeline.evaluate(() => document.activeElement.id), "time-2024");
+  await timelineContext.close();
+  console.log("Progressive loading: selected Desk stays complete with a slow unrelated shard; partial all-year search, selected/direct failures and Retry pass; Time Machine waits for all years and restores its jump");
 
   // Use the real files and production origin rules to exercise the isolated PDF
   // reader entirely offline, including theme messages between frame and parent.
   const offline = await browser.newContext({viewport:{width:390,height:844}});
   const root = process.cwd();
+  const release = await pdfjsReleaseFiles();
   const mime = {".html":"text/html", ".js":"text/javascript", ".mjs":"text/javascript", ".json":"application/json", ".css":"text/css", ".svg":"image/svg+xml", ".pdf":"application/pdf", ".md":"text/plain", ".wasm":"application/wasm", ".bcmap":"application/octet-stream"};
   await offline.route("**/*", async (route) => {
     const request = new URL(route.request().url());
     if (!["webhacklist.com", "irsdl.github.io"].includes(request.hostname)) return route.abort();
     let relative = decodeURIComponent(request.pathname).replace(/^\/webhacklist\//, "").replace(/^\//, "");
     if (!relative) relative = "index.html";
+    if (relative.startsWith(release.releasePath + "/")) {
+      const name = relative.slice(release.releasePath.length + 1), body = release.files.get(name);
+      if (!body) return route.fulfill({status:404,body:"Local release file not found"});
+      return route.fulfill({status:200,contentType:mime[path.extname(name)] || "application/octet-stream",headers:{"access-control-allow-origin":"*"},body});
+    }
     const file = path.resolve(root, /^(archived-references|original-listings)\//.test(relative) ? relative : `website/${relative}`);
     if (!file.startsWith(`${root}${path.sep}`)) return route.abort();
     try {

@@ -26,6 +26,7 @@ Search every technique, filter by year, and open any preserved document without 
 [The PDF archive](#-preserving-the-record) ·
 [Face the Judge](#-face-the-judge) ·
 [Support](#-support-this-archive) ·
+[Reuse terms](#reuse-terms) ·
 [Contributing](#contributing)
 
 </div>
@@ -298,6 +299,19 @@ Pull requests are welcome for any of these too. A **new technique** still needs 
 submission issue first — it is judged in full either way. And when a **new year is
 announced**, add `<year>.md`, then extend [tools/sources.json](tools/sources.json) and run
 `python tools/capture_pdf.py run` to archive the announcement pages.
+
+## Reuse terms
+
+Original website and tooling code by Web Hack List contributors, and its associated
+software documentation, is available under the [MIT License](LICENSE). Keep its
+copyright and permission notice when redistributing copies or substantial portions.
+See [Reuse & licences](website/reuse.html) for the scope, also linked from the website footer.
+
+Preserved research, original-listing PDFs, attributed or source-derived collection
+content and vendored components retain their separate rights, terms and credits.
+The MIT licence does not relicense them. CSV and bibliography exports provide
+catalogue metadata, citations and links; they do not grant rights to republish the
+cited research or source-derived text. Follow each source's own terms.
 
 ## Credits
 

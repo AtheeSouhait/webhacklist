@@ -220,6 +220,19 @@ For a **link fix**, one PR per year list is easiest to review. For a **new techn
 please open the submission issue first — the judgement has to happen either way, and a
 PR that adds an entry cannot short-circuit it.
 
+## Reuse terms for contributions
+
+Original website and tooling code, and its associated software documentation,
+is licensed under the [MIT License](LICENSE). Contribute your own original code
+under those terms, retaining copyright and permission notices. See
+[Reuse & licences](website/reuse.html) for the scope and third-party guidance.
+
+Third-party preserved research, original-listing PDFs, attributed or source-derived
+collection content and vendored components keep their own rights, terms and credits;
+do not apply the project MIT licence to them. Preserve source attribution and
+component notices. A CSV or bibliography export supplies citations and links,
+not permission to republish the cited work or source-derived text.
+
 ## Ground rules
 
 - **Sponsorship buys nothing here.** Entries are added on the evidence — a nomination in

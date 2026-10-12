@@ -15,7 +15,7 @@ const readerPort = Number(process.env.WEBSEC_READER_PORT || 4174);
 if (![port, readerPort].every((value) => Number.isInteger(value) && value >= 1024 && value <= 65535) || port === readerPort) throw Error("Choose two different ports between 1024 and 65535");
 const origin = `http://127.0.0.1:${port}`;
 const readerOrigin = `http://127.0.0.1:${readerPort}`;
-const appAssets = new Set(["index.html", "404.html", "app.js", "discovery.js", "constellation.js", "styles.css", "discovery.css", "brand-mark.svg", "social-preview.png", "site.webmanifest", "archive-years.json"]);
+const appAssets = new Set(["index.html", "404.html", "app.js", "saved-state.js", "shortlist.js", "discovery.js", "constellation.js", "styles.css", "discovery.css", "brand-mark.svg", "install-192.png", "install-512.png", "install-maskable-512.png", "apple-touch-icon.png", "social-preview.png", "site.webmanifest", "archive-years.json"]);
 const readerAssets = new Set(["pdf-reader.html", "pdf-reader.css", "pdf-reader.mjs", "pdf-reader-polyfills.mjs", "pdf-reader-url.mjs", "pdf-worker.mjs", "pdfjs-release.mjs"]);
 const mime = { ".html":"text/html; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".mjs":"text/javascript; charset=utf-8", ".css":"text/css; charset=utf-8", ".json":"application/json", ".webmanifest":"application/manifest+json", ".svg":"image/svg+xml", ".pdf":"application/pdf", ".md":"text/plain; charset=utf-8", ".png":"image/png", ".wasm":"application/wasm", ".ttf":"font/ttf" };
 const servers = [];
@@ -27,6 +27,8 @@ function localize(source) {
 function fileFor(pathname, reader) {
   let relative = decodeURIComponent(pathname).replace(/^\/(?:website\/|webhacklist\/)?/, "");
   if (!relative) relative = "index.html";
+  if (!reader && relative === "licence.txt") return path.join(root, "LICENSE");
+  if (!reader && ["reuse.html", "reuse.css", "vendor/pdfjs/LICENSE"].includes(relative)) return path.join(root, "website", relative);
   const archivePdf = /^(?:archived-references\/pdf\/[a-z0-9-]+\/[a-z0-9._-]+|original-listings\/[0-9-]+-(?:top10|nominees-and-top10))\.pdf$/i.test(relative);
   const archiveMd = /^archived-references\/md\/[a-z0-9-]+\/[a-z0-9._-]+\.md$/i.test(relative);
   const archiveFigure = /^archived-references\/figures\/[a-z0-9-]+\/[a-z0-9._-]+\/[a-z0-9_-][a-z0-9._-]*\.png$/i.test(relative);
@@ -56,7 +58,7 @@ for (const reader of [false, true]) {
       const info = await stat(file);
       if (!info.isFile()) { response.writeHead(404).end("Not found"); return; }
       const type = path.extname(file);
-      const headers = { "content-type":mime[type] || "application/octet-stream", "cache-control":"no-store", "x-content-type-options":"nosniff", "access-control-allow-origin":readerOrigin };
+      const headers = { "content-type":path.basename(file) === "LICENSE" ? "text/plain; charset=utf-8" : mime[type] || "application/octet-stream", "cache-control":"no-store", "x-content-type-options":"nosniff", "access-control-allow-origin":readerOrigin };
       if (request.method === "OPTIONS") { response.writeHead(204, headers).end(); return; }
       if ([".html", ".js", ".mjs"].includes(type) && !file.includes(`${path.sep}vendor${path.sep}`)) {
         const body = localize(await readFile(file, "utf8"));
