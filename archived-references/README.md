@@ -18,11 +18,11 @@ Curating the year lists themselves is a separate job. This folder is generated
 by `tools/references/refs.py` from those lists and never edits them.
 
 
-2442 reference(s) archived across 20 year list(s). 2296 carry technique and 146 are a record ABOUT a product rather than research - a CVE row, a vendor advisory, release notes, a stub. Each reference is filed under the year list that cites it.
+2446 reference(s) archived across 20 year list(s). 2300 carry technique and 146 are a record ABOUT a product rather than research - a CVE row, a vendor advisory, release notes, a stub. Each reference is filed under the year list that cites it.
 
 Three more lists complete the picture: [document-gaps.md](document-gaps.md) is everything we WANT and do not have, [excluded.md](excluded.md) is everything the archive deliberately keeps no document for, with the reason, and [store-gaps.md](store-gaps.md) is the archived references whose stored bytes have since gone missing.
 
-## 2026-ai (449)
+## 2026-ai (453)
 
 | Reference | Kind | Publisher | Year | Grade | Cited |
 |---|---|---|---|---|---|
@@ -71,6 +71,7 @@ Three more lists complete the picture: [document-gaps.md](document-gaps.md) is e
 | [Anthropic Mythos Finds Rejetto HFS RCE](md/2026-ai/2026-horizon3-anthropic-mythos-finds-rejetto-hfs-rce.md) | article | Horizon3 | 2026 | research | 1 |
 | [API Keys Leaking in PNG Metadata of AI Images](md/2026-ai/truffle-security-api-keys-leaking-png-metadata-ai-images.md) | article | Truffle Security |  | research | 1 |
 | [Approve Once, Exploit Forever: The Trust Persistence Problem in AI Coding Agents](md/2026-ai/2026-mindgard-approve-once-exploit-forever-trust-persistence-problem-ai-agents.md) | article | Mindgard | 2026 | research | 1 |
+| [Artifactory Under Attack: In-the-Wild Exploitation of CVE-2026-42016, CVE-2026-42018 & CVE-2026-82329](md/2026-ai/2026-wiz-io-artifactory-under-attack-wild-exploitation-cve-2026-42016-cve-82329.md) | article | Wiz Research | 2026 | research | 1 |
 | [Ask the Agent Nicely: Two Authorization Bypasses in n8n AI Agents](md/2026-ai/2026-antonio-de-turris-ask-agent-nicely-two-authorization-bypasses-n8n-ai-agents.md) | article | Antonio De Turris | 2026 | research | 1 |
 | [Assessing Automated Prompt Injection Attacks in Agentic Environments](md/2026-ai/arxiv-org-assessing-automated-prompt-injection-attacks-agentic-environments.md) | article | arXiv.org |  | research | 1 |
 | [Assessing Browser-level Defense against IDN-based Phishing](md/2026-ai/usenix-org-assessing-browser-level-defense-against-idn-based-phishing.md) | article | usenix.org |  | research | 1 |
@@ -138,6 +139,7 @@ Three more lists complete the picture: [document-gaps.md](document-gaps.md) is e
 | [CVE-2026-22200: Ticket to Shell in osTicket](md/2026-ai/2026-horizon3-cve-2026-22200-ticket-shell-osticket.md) | article | Horizon3.ai | 2026 | research | 1 |
 | [CVE-2026-33017: How I Found an Unauthenticated RCE in Langflow by Reading the Code They Already Fixed](md/2026-ai/2026-dev-community-cve-2026-33017-how-i-found-unauthenticated-rce-fixed.md) | article | DEV Community | 2026 | research | 1 |
 | [CVE-2026-41238: How Prototype Pollution Turns DOMPurify Into an XSS Gadget](md/2026-ai/2026-trace37-cve-2026-41238-how-prototype-pollution-turns-dompurify-xss-gadget.md) | article | trace37 | 2026 | research | 1 |
+| [Death By A Thousand PaperCuts (PaperCut Pre-Auth RCE Chain and Patch Bypasses WT-2026-0141-0144/CVE-2026-82077/CVE-2026-82078/CVE-2026-81578)](md/2026-ai/2026-watchtowr-labs-death-thousand-papercuts-papercut-pre-auth-rce-chain-81578.md) | article | watchTowr Labs | 2026 | research | 1 |
 | [Demystifying the (In)Security of OAuth-based Account Linking in Connector Ecosystems](md/2026-ai/the-chinese-university-of-hong-kong-demystifying-security-oauth-ecosystems.md) | article | The Chinese University of Hong Kong |  | research | 1 |
 | [Deployment Poisoning: A(nother) Novel Attack Vector for GitHub Actions](md/2026-ai/boost-security-labs-deployment-poisoning-nother-novel-attack-vector-actions.md) | article | Boost Security Labs |  | research | 1 |
 | [Discovering and exploiting a remote code execution vulnerability in OpenCode (GHSA-632h-h47v-g4x4)](md/2026-ai/2026-securitylabs-datadoghq-com-discovering-exploiting-remote-code-g4x4.md) | article | Datadog Security Labs | 2026 | research | 1 |
@@ -309,6 +311,7 @@ Three more lists complete the picture: [document-gaps.md](document-gaps.md) is e
 | [The Memory Heist](md/2026-ai/2026-ayush-paul-memory-heist.md) | article | Ayush Paul | 2026 | research | 1 |
 | [The Most Organized Threat Actors Use Your ITSM (BMC FootPrints Pre-Auth Remote Code Execution Chains)](md/2026-ai/2026-watchtowr-labs-most-organized-threat-actors-use-your-itsm-bmc-chains.md) | article | watchTowr Labs | 2026 | research | 1 |
 | [The Race to Ship AI Tools Left Security Behind. Part 1: Sandbox Escape](md/2026-ai/cymulate-race-ship-ai-tools-left-security-behind-part-1-sandbox-escape.md) | article | Cymulate |  | research | 1 |
+| [The Shared Clipboard Inside the Sandbox: Cross-Account Data Leakage in ChatGPT](md/2026-ai/2026-check-point-research-shared-clipboard-inside-sandbox-cross-account-chatgpt.md) | article | Check Point Research | 2026 | research | 1 |
 | [The sorry state of skill distribution](md/2026-ai/2026-trail-of-bits-sorry-state-skill-distribution.md) | article | Trail of Bits | 2026 | research | 1 |
 | [The sorry state of skill distribution (Earlier structural validation contribution)](md/2026-ai/2026-github-sorry-state-skill-distribution-earlier-structural-contribution.md) | article | GitHub | 2026 | research | 1 |
 | [The State of Passkeys: Studying the Adoption and Security of Passkeys on the Web](md/2026-ai/usenix-org-state-passkeys-studying-adoption-security-passkeys-web.md) | article | USENIX |  | research | 1 |
@@ -376,6 +379,7 @@ Three more lists complete the picture: [document-gaps.md](document-gaps.md) is e
 | [CVE-2026-82222: GiveWP object-injection RCE validation lab](md/2026-ai/github-dinosn-givewp-cve-2026-82222-rce-lab.md) | repo | GitHub |  | research | 1 |
 | [Detection generator](md/2026-ai/github-watchtowrlabs-watchtowr-vs-atlassian-cve-2026-21589.md) | repo | watchTowr Labs |  | research | 1 |
 | [Detection generator](md/2026-ai/github-watchtowrlabs-watchtowr-vs-citrix-netscaler-cve-2026-88771.md) | repo | GitHub |  | research | 1 |
+| [Detection generator](md/2026-ai/github-watchtowrlabs-watchtowr-vs-papercut-wt-2026-0143.md) | repo | watchTowr Labs |  | research | 1 |
 | [ELBaph: AWS Load Balancer Attack-Path Analysis](md/2026-ai/doyensec-elbaph-aws-load-balancer-attack-path-analysis.md) | repo | Doyensec |  | research | 1 |
 | [EvilFontTool: cross-format glyph-remapping deception labs](md/2026-ai/github-doctoreww-evilfonttool.md) | repo | GitHub |  | research | 1 |
 | [KindaRails2Shell: how a MATLAB file reads your secrets and pops a shell on Rails (Rails technical details)](md/2026-ai/github-kindarails2shell-how-matlab-file-reads-your-secrets-pops-shell-details.md) | repo | GitHub |  | research | 1 |

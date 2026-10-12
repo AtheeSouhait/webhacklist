@@ -2118,7 +2118,10 @@
       "https://portswigger.net/research/smashing-the-token-limit": "2026-ai-r-68aa41b4439d7d76643ffe9f",
       "https://labs.watchtowr.com/you-wont-hear-about-these-even-in-myths-atlassian-jira-confluence-and-more-pre-auth-arbitrary-file-read-cve-2026-21589": "2026-ai-r-ab6bdd13c6da2ff9e07ec2c7",
       "https://www.slcyber.io/research/a-jpeg-a-race-and-a-ghost-breaking-discourses-image-pipeline": "2026-ai-r-871eb9918de961ad9aa95545",
-      "https://arxiv.org/abs/2610.09264": "2026-ai-r-048a26d2219674d12524a594"
+      "https://arxiv.org/abs/2610.09264": "2026-ai-r-048a26d2219674d12524a594",
+      "https://research.checkpoint.com/2026/the-shared-clipboard-inside-the-sandbox-cross-account-data-leakage-in-chatgpt": "2026-ai-r-92d9ad7456804b9c3b3f841d",
+      "https://www.wiz.io/blog/artifactory-under-attack-in-the-wild-exploitation-of-cve-2026-42016-cve-2026-4201": "2026-ai-r-d1b8abcfd6ba01fc08bba42f",
+      "https://labs.watchtowr.com/death-by-a-thousand-papercuts-papercut-pre-auth-rce-chain-and-patch-bypasses-wt-2026-0141-0144-cve-2026-82077-cve-2026-82078-cve-2026-81578": "2026-ai-r-cbb12260f5bc89a08bcb9727"
     }
   },
   "disambiguators": {

@@ -40,6 +40,7 @@ Older decisions with an unknown merit revision are marked `legacy-unspecified` i
 | [Apple Maildrop URLs Expose Unsigned, Client-Controlled Filename, Size, and Icon Parameters](<https://stuart-thomas.com/research/maildrop-spoofed-params/>) | Not added |
 | [Approve Once, Exploit Forever: The Trust Persistence Problem in Claude Code, Codex and Gemini-CLI](<https://mindgard.ai/blog/approve-once-exploit-forever-the-trust-persistence-problem-in-ai-coding-agents>) | Added |
 | [Are your Sites Truly Isolated? Automatically Detecting Logic Bugs in Site Isolation Implementations](<https://www.ndss-symposium.org/wp-content/uploads/2026-f902-paper.pdf>) [Related source](<https://www.ndss-symposium.org/wp-content/uploads/f0902-drescher-slides.pdf>) | Added |
+| [Artifactory Under Attack: In-the-Wild Exploitation of CVE-2026-42016, CVE-2026-42018 & CVE-2026-82329](<https://www.wiz.io/blog/artifactory-under-attack-in-the-wild-exploitation-of-cve-2026-42016-cve-2026-4201>) | Added |
 | [Ask the Agent Nicely: Two Authorization Bypasses in n8n AI Agents](<https://deturris.io/posts/n8n-ai-agents-authorization-bypasses/>) | Added |
 | [Assessing Automated Prompt Injection Attacks in Agentic Environments](<https://arxiv.org/abs/2606.10525>) | Added |
 | [Astro Full-Read SSRF via Host Header Injection](<https://www.aikido.dev/blog/astro-full-read-ssrf-via-host-header-injection>) | Added |
@@ -132,6 +133,7 @@ Older decisions with an unknown merit revision are marked `legacy-unspecified` i
 | [CVE-2026-82222: GiveWP object-injection RCE validation lab](<https://github.com/dinosn/givewp-cve-2026-82222-rce-lab>) [Related source](<https://patchstack.com/database/wordpress/plugin/give/vulnerability/wordpress-givewp-plugin-4-16-7-1-remote-code-execution-rce-vulnerability>) | Added |
 | [CVE-2026-87902: WordPress file inclusion](<https://ressl.ch/blog/cve-2026-87902-wordpress/>) | Added |
 | [Dava India pharmacy compromise](<https://eaton-works.com/2026/02/13/dava-india-hack/>) | Not added |
+| [Death By A Thousand PaperCuts: PaperCut pre-authentication RCE and patch bypasses](<https://labs.watchtowr.com/death-by-a-thousand-papercuts-papercut-pre-auth-rce-chain-and-patch-bypasses-wt-2026-0141-0144-cve-2026-82077-cve-2026-82078-cve-2026-81578/>) [Related source](<https://github.com/watchtowrlabs/watchTowr-vs-PaperCut-WT-2026-0143/>) | Added |
 | [Demystifying the (In)Security of OAuth-based Account Linking in Connector Ecosystems](<https://sp2026.ieee-security.org/accepted-papers.html>) [Related source](<https://mobitec.ie.cuhk.edu.hk/connector-oauth-security/>) [Related source](<https://mobitec.ie.cuhk.edu.hk/connector-oauth-security/paper.pdf>) | Added |
 | [Deployment Poisoning: A(nother) Novel Attack Vector for GitHub Actions](<https://labs.boostsecurity.io/articles/deployment_poisoning>) | Added |
 | [Detecting CI/CD Supply Chain Attacks with Canary Credentials](<https://tracebit.com/blog/detecting-cicd-supply-chain-attacks-with-canary-credentials>) | Not added |
@@ -385,6 +387,7 @@ Older decisions with an unknown merit revision are marked `legacy-unspecified` i
 | [The model isn't cooperating](<https://portswigger.net/research/the-model-isnt-cooperating>) | Not added |
 | [The Most Organized Threat Actors Use Your ITSM: BMC FootPrints Pre-Auth RCE Chains](<https://labs.watchtowr.com/thanks-itsms-threat-actors-have-never-been-so-organized-bmc-footprints-pre-auth-remote-code-execution-chains/>) | Added |
 | [The Script Tag That Isn't: Speculation Rules Injection](<https://labs.trace37.com/blog/specfetch-speculation-rules-injection/>) | Not added |
+| [The Shared Clipboard Inside the Sandbox: Cross-Account Data Leakage in ChatGPT](<https://research.checkpoint.com/2026/the-shared-clipboard-inside-the-sandbox-cross-account-data-leakage-in-chatgpt/>) | Added |
 | [The sorry state of skill distribution](<https://blog.trailofbits.com/2026/06/03/the-sorry-state-of-skill-distribution/>) [Related source](<https://github.com/trailofbits/overtly-malicious-skills>) [Related source](<https://github.com/cisco-ai-defense/skill-scanner/pull/25>) | Added |
 | [The SQL Server Unicode problem: Best-Fit mapping as a universal filter bypass](<https://www.synacktiv.com/en/publications/the-sql-server-unicode-problem-why-your-data-might-not-be-what-you-think-it-is>) | Not added |
 | [The State of Passkeys: Studying the Adoption and Security of Passkeys on the Web](<https://www.usenix.org/conference/usenixsecurity26/presentation/jannett>) [Related source](<https://github.com/RUB-NDS/state-of-passkeys-artifacts/blob/main/paper.pdf>) [Related source](<https://github.com/RUB-NDS/state-of-passkeys-artifacts>) [Related source](<https://passkeys.tools>) | Added |

@@ -169,7 +169,7 @@
    "documents": 10
   },
   "ai-agent": {
-   "documents": 116
+   "documents": 117
   },
   "ai-assisted-research": {
    "documents": 3
@@ -199,10 +199,10 @@
    "documents": 57
   },
   "attack-chain": {
-   "documents": 311
+   "documents": 313
   },
   "auth-bypass": {
-   "documents": 411
+   "documents": 414
   },
   "autofill": {
    "documents": 5
@@ -304,10 +304,10 @@
    "documents": 13
   },
   "command-and-control": {
-   "documents": 2
+   "documents": 3
   },
   "command-injection": {
-   "documents": 87
+   "documents": 88
   },
   "configuration": {
    "documents": 10
@@ -328,10 +328,10 @@
    "documents": 6
   },
   "credential-theft": {
-   "documents": 17
+   "documents": 19
   },
   "cross-tenant": {
-   "documents": 5
+   "documents": 6
   },
   "crypto": {
    "documents": 24
@@ -358,7 +358,7 @@
    "documents": 5
   },
   "data-exfiltration": {
-   "documents": 20
+   "documents": 21
   },
   "database": {
    "documents": 80
@@ -388,7 +388,7 @@
    "documents": 44
   },
   "detection": {
-   "documents": 152
+   "documents": 153
   },
   "differential-fuzzing": {
    "documents": 1
@@ -595,7 +595,7 @@
    "documents": 4
   },
   "java": {
-   "documents": 135
+   "documents": 137
   },
   "javascript": {
    "documents": 434
@@ -655,7 +655,7 @@
    "documents": 15
   },
   "malware": {
-   "documents": 2
+   "documents": 3
   },
   "mass-assignment": {
    "documents": 12
@@ -739,13 +739,13 @@
    "documents": 5
   },
   "patch-bypass": {
-   "documents": 4
+   "documents": 5
   },
   "patch-diffing": {
    "documents": 4
   },
   "path-traversal": {
-   "documents": 94
+   "documents": 95
   },
   "pdf": {
    "documents": 36
@@ -754,7 +754,7 @@
    "documents": 4
   },
   "persistence": {
-   "documents": 3
+   "documents": 4
   },
   "phishing": {
    "documents": 60
@@ -784,13 +784,13 @@
    "documents": 18
   },
   "privilege-escalation": {
-   "documents": 141
+   "documents": 142
   },
   "prng": {
    "documents": 3
   },
   "prompt-injection": {
-   "documents": 76
+   "documents": 77
   },
   "prototype-pollution": {
    "documents": 36
@@ -814,7 +814,7 @@
    "documents": 1
   },
   "rce": {
-   "documents": 434
+   "documents": 436
   },
   "react": {
    "documents": 7
@@ -841,7 +841,7 @@
    "documents": 20
   },
   "rest-api": {
-   "documents": 57
+   "documents": 58
   },
   "reverse-engineering": {
    "documents": 3
@@ -895,7 +895,7 @@
    "documents": 1
   },
   "side-channel": {
-   "documents": 237
+   "documents": 238
   },
   "smb": {
    "documents": 2
@@ -973,7 +973,7 @@
    "documents": 3
   },
   "tooling": {
-   "documents": 393
+   "documents": 394
   },
   "trust-boundary": {
    "documents": 12
@@ -1072,5 +1072,5 @@
    "documents": 3
   }
  },
- "updated": "2026-10-09T08:38:05+00:00"
+ "updated": "2026-10-12T11:29:28+00:00"
 }

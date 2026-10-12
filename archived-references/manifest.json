@@ -1,6 +1,6 @@
 {
  "schema": 2,
- "updated": "2026-10-09T08:37:47+00:00",
+ "updated": "2026-10-12T11:47:48+00:00",
  "urls": {
   "https://0day.click/parser-diff-talk-oc25": {
    "also_at": [],
@@ -131317,6 +131317,112 @@
    },
    "title": "Detection generator"
   },
+  "https://github.com/watchtowrlabs/watchTowr-vs-PaperCut-WT-2026-0143": {
+   "also_at": [],
+   "authors": [
+    "Piotr Bazydlo"
+   ],
+   "cited_by": [
+    "2026-ai.md:359"
+   ],
+   "cited_title": "Detection generator",
+   "commit": "a10a46a35a268141a44bfd4efcb02f2afa08fcbe",
+   "content_gap": "",
+   "content_sha256": "e02fc99f69b81f29ee2c53edf850b094a6408f12ce8909ca9a47eb074c0ed422",
+   "decision": {
+    "at": "2026-10-12",
+    "by": "rule:default",
+    "class": "research",
+    "outcome": "archive",
+    "reason": "carries technique"
+   },
+   "depth": "full",
+   "depth_reason": "default",
+   "digest": {
+    "at": "2026-10-12",
+    "by": "webseclist-review/1",
+    "of": "e02fc99f69b81f29ee2c53edf850b094a6408f12ce8909ca9a47eb074c0ed422",
+    "tags": [
+     "auth-bypass",
+     "detection",
+     "tooling",
+     "java"
+    ],
+    "text": "The repository provides a non-exploitative detection generator for PaperCut authentication bypasses WT-2026-0143, WT-2026-0142 and CVE-2026-81578. It probes whether the unauthenticated Home page can bridge into protected forms and distinguishes vulnerable responses from patched redirects."
+   },
+   "first_seen_utc": "2026-10-12T11:18:18+00:00",
+   "grade": "research",
+   "health": {
+    "evidence": "http 200",
+    "final_url": "https://github.com/watchtowrlabs/watchTowr-vs-PaperCut-WT-2026-0143/",
+    "http": 200,
+    "redirect_chain": [],
+    "snapshot": "",
+    "source": "probe",
+    "status": "ok",
+    "text_length": 6091,
+    "title": "GitHub - watchtowrlabs/watchTowr-vs-PaperCut-WT-2026-0143 · GitHub"
+   },
+   "kind": "repo",
+   "licence": "see the repository",
+   "publisher": "watchTowr Labs",
+   "raw_sha256": "e6ffe21d8e4a459c59e57453224d8ca2a31eaac3aeb57216d129a19d2096307d",
+   "repository_capture": 1,
+   "slug": "github-watchtowrlabs-watchtowr-vs-papercut-wt-2026-0143",
+   "spellings": [
+    "https://github.com/watchtowrlabs/watchTowr-vs-PaperCut-WT-2026-0143/"
+   ],
+   "steps": {
+    "acquire": {
+     "content_sha256": "e02fc99f69b81f29ee2c53edf850b094a6408f12ce8909ca9a47eb074c0ed422",
+     "extraction": null,
+     "raw_sha256": "e6ffe21d8e4a459c59e57453224d8ca2a31eaac3aeb57216d129a19d2096307d",
+     "reason": "",
+     "result": "stored",
+     "slug": "github-watchtowrlabs-watchtowr-vs-papercut-wt-2026-0143",
+     "utc": "2026-10-12T11:42:32+00:00"
+    },
+    "attribution": {
+     "authors": [
+      "Piotr Bazydlo"
+     ],
+     "publisher": "watchTowr Labs",
+     "reason": "maintainer-stated attribution from overrides.json",
+     "result": "applied",
+     "utc": "2026-10-12T11:22:57+00:00"
+    },
+    "check": {
+     "evidence": "http 200",
+     "final_url": "https://github.com/watchtowrlabs/watchTowr-vs-PaperCut-WT-2026-0143/",
+     "http": 200,
+     "kind": "repo",
+     "redirect_chain": [],
+     "snapshot": "",
+     "source": "probe",
+     "status": "ok",
+     "text_length": 6091,
+     "title": "GitHub - watchtowrlabs/watchTowr-vs-PaperCut-WT-2026-0143 · GitHub",
+     "utc": "2026-10-12T11:18:25+00:00"
+    },
+    "pdf": {
+     "bytes": 96180,
+     "file": "archived-references/pdf/2026-ai/github-watchtowrlabs-watchtowr-vs-papercut-wt-2026-0143.pdf",
+     "renderer": 4,
+     "result": "rendered",
+     "source": "markdown",
+     "utc": "2026-10-12T11:47:48+00:00"
+    },
+    "render": {
+     "chars": 7166,
+     "depth": "full",
+     "file": "archived-references/md/2026-ai/github-watchtowrlabs-watchtowr-vs-papercut-wt-2026-0143.md",
+     "result": "ok",
+     "translation_file": "",
+     "utc": "2026-10-12T11:42:34+00:00"
+    }
+   },
+   "title": "Detection generator"
+  },
   "https://github.com/weizman/Realms-Initialization-Control": {
    "also_at": [],
    "cited_by": [
@@ -196833,6 +196939,218 @@
      "by": "AI archive validation"
     }
    ]
+  },
+  "https://labs.watchtowr.com/death-by-a-thousand-papercuts-papercut-pre-auth-rce-chain-and-patch-bypasses-wt-2026-0141-0144-cve-2026-82077-cve-2026-82078-cve-2026-81578": {
+   "also_at": [],
+   "authors": [
+    "Piotr Bazydlo"
+   ],
+   "cited_by": [
+    "2026-ai.md:359"
+   ],
+   "cited_title": "Death By A Thousand PaperCuts: PaperCut pre-authentication RCE and patch bypasses",
+   "content_gap": "",
+   "content_sha256": "c8703e8553b89135dabf29edced1c8ae527f392013513e985a3d4f1ce4b9629b",
+   "decision": {
+    "at": "2026-10-12",
+    "by": "rule:default",
+    "class": "research",
+    "outcome": "archive",
+    "reason": "carries technique"
+   },
+   "depth": "full",
+   "depth_reason": "default",
+   "digest": {
+    "at": "2026-10-12",
+    "by": "webseclist-review/1",
+    "of": "c8703e8553b89135dabf29edced1c8ae527f392013513e985a3d4f1ce4b9629b",
+    "tags": [
+     "auth-bypass",
+     "path-traversal",
+     "rce",
+     "java",
+     "command-injection",
+     "patch-bypass",
+     "attack-chain"
+    ],
+    "text": "The article shows that PaperCut's Apache Tapestry routing validates only a root page, allowing unauthenticated access to setup forms and an administrator-password reset. It chains that bypass with a Scan-to-Fax connector path traversal and controlled command arguments to obtain pre-authentication code execution on an intermediate patched build."
+   },
+   "first_seen_utc": "2026-10-12T11:18:01+00:00",
+   "grade": "research",
+   "health": {
+    "evidence": "http 200",
+    "final_url": "https://labs.watchtowr.com/death-by-a-thousand-papercuts-papercut-pre-auth-rce-chain-and-patch-bypasses-wt-2026-0141-0144-cve-2026-82077-cve-2026-82078-cve-2026-81578/",
+    "http": 200,
+    "redirect_chain": [],
+    "snapshot": "",
+    "source": "probe",
+    "status": "ok",
+    "text_length": 23096,
+    "title": "Death By A Thousand PaperCuts (PaperCut Pre-Auth RCE Chain and Patch Bypasses WT-2026-0141-0144/CVE-2026-82077/CVE-2026-82078/CVE-2026-81578)"
+   },
+   "images": {
+    "https://storage.ghost.io/c/a0/dc/a0dcbbe4-0ae7-4d7e-90f7-ebbc3a0f5a84/content/images/2026/10/image-10.png": {
+     "bytes": 55857,
+     "height": 810,
+     "sha256": "9b0ae51d9c4fa2cf96270e589dc8256eb356fb59a9a40906639eb073258b6452",
+     "width": 500
+    },
+    "https://storage.ghost.io/c/a0/dc/a0dcbbe4-0ae7-4d7e-90f7-ebbc3a0f5a84/content/images/2026/10/image-11.png": {
+     "bytes": 37078,
+     "height": 304,
+     "sha256": "522f6f0509f6b96e174d2a9087c2aa009531139810a1f47961fbc4ec857dabf9",
+     "width": 1026
+    },
+    "https://storage.ghost.io/c/a0/dc/a0dcbbe4-0ae7-4d7e-90f7-ebbc3a0f5a84/content/images/2026/10/image-12.png": {
+     "bytes": 94185,
+     "height": 828,
+     "sha256": "3594934f1341cf199a2345c9a4fc9747a715fb311dad1490cd92a8096ee52aa3",
+     "width": 1100
+    },
+    "https://storage.ghost.io/c/a0/dc/a0dcbbe4-0ae7-4d7e-90f7-ebbc3a0f5a84/content/images/2026/10/image-13.png": {
+     "bytes": 17920,
+     "height": 281,
+     "sha256": "b7ba0bf439d9eabe901575541ddf62c55da249a96169e5c66edfe9d3b46767e7",
+     "width": 611
+    },
+    "https://storage.ghost.io/c/a0/dc/a0dcbbe4-0ae7-4d7e-90f7-ebbc3a0f5a84/content/images/2026/10/image-14.png": {
+     "bytes": 35465,
+     "height": 401,
+     "sha256": "d3b73f13fa85131ae6460fbedaeec890a89ae225a68d496d5f6534890dc5574c",
+     "width": 1048
+    },
+    "https://storage.ghost.io/c/a0/dc/a0dcbbe4-0ae7-4d7e-90f7-ebbc3a0f5a84/content/images/2026/10/image-15.png": {
+     "bytes": 17616,
+     "height": 162,
+     "sha256": "39e3a07963b6dcd3db2a438c2259943444fc1780d7a2a71733f8d9af6ca74353",
+     "width": 589
+    },
+    "https://storage.ghost.io/c/a0/dc/a0dcbbe4-0ae7-4d7e-90f7-ebbc3a0f5a84/content/images/2026/10/image-16.png": {
+     "bytes": 53082,
+     "height": 597,
+     "sha256": "52a4ca64d6199c9c525e9c0cccd5f3a7a380eb417727f18cc5a605358eac21fc",
+     "width": 1100
+    },
+    "https://storage.ghost.io/c/a0/dc/a0dcbbe4-0ae7-4d7e-90f7-ebbc3a0f5a84/content/images/2026/10/image-17.png": {
+     "bytes": 29562,
+     "height": 497,
+     "sha256": "9470ad04301a8e010c12149101d2e66ff0d5d9cbdfcb5cb4b91d76a3a06684f8",
+     "width": 503
+    },
+    "https://storage.ghost.io/c/a0/dc/a0dcbbe4-0ae7-4d7e-90f7-ebbc3a0f5a84/content/images/2026/10/image-18.png": {
+     "bytes": 68874,
+     "height": 852,
+     "sha256": "ec0059f4ac4a5a388d484dc007e31a177cc705d782e3657d47dc58d9f1ebb99d",
+     "width": 500
+    },
+    "https://storage.ghost.io/c/a0/dc/a0dcbbe4-0ae7-4d7e-90f7-ebbc3a0f5a84/content/images/2026/10/image-19.png": {
+     "bytes": 8345,
+     "height": 360,
+     "sha256": "fc06dc92dd86eada45b28044d76711d7de0469286989329dc054848a23037fdc",
+     "width": 480
+    }
+   },
+   "kind": "article",
+   "language": "en",
+   "licence": "unknown",
+   "published": "2026-10-09",
+   "publisher": "watchTowr Labs",
+   "raw_sha256": "96cd0f41a7c439ab17c6555a41829bdc6833ce2329f1a7e6649814fbb60a1424",
+   "slug": "2026-watchtowr-labs-death-thousand-papercuts-papercut-pre-auth-rce-chain-81578",
+   "spellings": [
+    "https://labs.watchtowr.com/death-by-a-thousand-papercuts-papercut-pre-auth-rce-chain-and-patch-bypasses-wt-2026-0141-0144-cve-2026-82077-cve-2026-82078-cve-2026-81578/"
+   ],
+   "steps": {
+    "acquire": {
+     "content_sha256": "c8703e8553b89135dabf29edced1c8ae527f392013513e985a3d4f1ce4b9629b",
+     "extraction": {
+      "candidates": [
+       {
+        "chars": 25974,
+        "code_blocks": 8,
+        "headings": 9,
+        "images": 10,
+        "links": 12,
+        "name": "precision",
+        "tables": 0,
+        "words": 3237
+       },
+       {
+        "chars": 25991,
+        "code_blocks": 8,
+        "headings": 9,
+        "images": 10,
+        "links": 12,
+        "name": "recall",
+        "tables": 0,
+        "words": 3240
+       },
+       {
+        "chars": 26135,
+        "code_blocks": 8,
+        "headings": 9,
+        "images": 10,
+        "links": 12,
+        "name": "raw",
+        "tables": 0,
+        "words": 3253
+       }
+      ],
+      "chosen": "precision",
+      "why": "precision kept the code blocks and most of the text"
+     },
+     "raw_sha256": "96cd0f41a7c439ab17c6555a41829bdc6833ce2329f1a7e6649814fbb60a1424",
+     "reason": "",
+     "result": "stored",
+     "slug": "2026-watchtowr-labs-death-thousand-papercuts-papercut-pre-auth-rce-chain-81578",
+     "utc": "2026-10-12T11:42:17+00:00"
+    },
+    "attribution": {
+     "authors": [
+      "Piotr Bazydlo"
+     ],
+     "publisher": "watchTowr Labs",
+     "reason": "maintainer-stated attribution from overrides.json",
+     "result": "applied",
+     "utc": "2026-10-12T11:22:57+00:00"
+    },
+    "check": {
+     "evidence": "http 200",
+     "final_url": "https://labs.watchtowr.com/death-by-a-thousand-papercuts-papercut-pre-auth-rce-chain-and-patch-bypasses-wt-2026-0141-0144-cve-2026-82077-cve-2026-82078-cve-2026-81578/",
+     "http": 200,
+     "kind": "article",
+     "redirect_chain": [],
+     "snapshot": "",
+     "source": "probe",
+     "status": "ok",
+     "text_length": 23096,
+     "title": "Death By A Thousand PaperCuts (PaperCut Pre-Auth RCE Chain and Patch Bypasses WT-2026-0141-0144/CVE-2026-82077/CVE-2026-82078/CVE-2026-81578)",
+     "utc": "2026-10-12T11:18:08+00:00"
+    },
+    "images": {
+     "bytes": 835968,
+     "reason": "10 of 10 image(s) preserved",
+     "result": "stored",
+     "utc": "2026-10-12T11:46:23+00:00"
+    },
+    "pdf": {
+     "bytes": 722660,
+     "file": "archived-references/pdf/2026-ai/2026-watchtowr-labs-death-thousand-papercuts-papercut-pre-auth-rce-chain-81578.pdf",
+     "renderer": 4,
+     "result": "rendered",
+     "source": "markdown",
+     "utc": "2026-10-12T11:47:37+00:00"
+    },
+    "render": {
+     "chars": 29567,
+     "depth": "full",
+     "file": "archived-references/md/2026-ai/2026-watchtowr-labs-death-thousand-papercuts-papercut-pre-auth-rce-chain-81578.md",
+     "result": "ok",
+     "translation_file": "",
+     "utc": "2026-10-12T11:42:19+00:00"
+    }
+   },
+   "title": "Death By A Thousand PaperCuts (PaperCut Pre-Auth RCE Chain and Patch Bypasses WT-2026-0141-0144/CVE-2026-82077/CVE-2026-82078/CVE-2026-81578)"
   },
   "https://labs.watchtowr.com/do-smart-people-ever-say-theyre-smart-smartertools-smartermail-pre-auth-rce-cve-2025-52691": {
    "also_at": [],
@@ -271781,6 +272099,204 @@
     }
    },
    "title": "Bypassing SAML 2.0 SSO with XML Signature Attacks"
+  },
+  "https://research.checkpoint.com/2026/the-shared-clipboard-inside-the-sandbox-cross-account-data-leakage-in-chatgpt": {
+   "also_at": [],
+   "authors": [
+    "Alexey Bukhteyev"
+   ],
+   "cited_by": [
+    "2026-ai.md:348"
+   ],
+   "cited_title": "The Shared Clipboard Inside the Sandbox: Cross-Account Data Leakage in ChatGPT",
+   "content_gap": "",
+   "content_sha256": "3835386ce671e8cb0a0524fb2eb6b597e9dd04d28d8064676d24ad3bd9daabf8",
+   "decision": {
+    "at": "2026-10-12",
+    "by": "rule:default",
+    "class": "research",
+    "outcome": "archive",
+    "reason": "carries technique"
+   },
+   "depth": "full",
+   "depth_reason": "default",
+   "digest": {
+    "at": "2026-10-12",
+    "by": "webseclist-review/1",
+    "of": "3835386ce671e8cb0a0524fb2eb6b597e9dd04d28d8064676d24ad3bd9daabf8",
+    "tags": [
+     "ai-agent",
+     "prompt-injection",
+     "cross-tenant",
+     "data-exfiltration",
+     "side-channel",
+     "credential-theft"
+    ],
+    "text": "The article turns mutable Artifactory item properties shared by isolated ChatGPT code-execution containers into a bidirectional cross-account channel. A prompt, shared conversation or custom GPT can use it as a hidden task stream, letting the victim session read connected-app data and return results without showing the task in the visible response."
+   },
+   "first_seen_utc": "2026-10-12T11:17:33+00:00",
+   "grade": "research",
+   "health": {
+    "evidence": "http 200",
+    "final_url": "https://research.checkpoint.com/2026/the-shared-clipboard-inside-the-sandbox-cross-account-data-leakage-in-chatgpt/",
+    "http": 200,
+    "redirect_chain": [],
+    "snapshot": "",
+    "source": "probe",
+    "status": "ok",
+    "text_length": 19051,
+    "title": "The Shared Clipboard Inside the Sandbox: Cross-Account Data Leakage in ChatGPT - Check Point Research"
+   },
+   "images": {
+    "https://research.checkpoint.com/wp-content/uploads/2017/08/WannaCry-Post-No-Image-1021x450.jpg": {
+     "bytes": 114525,
+     "height": 450,
+     "sha256": "0d2bbacaf867993e4c1c80bc54ebc13cca8b581eed4ad2f4907b9180f116a1cb",
+     "width": 1021
+    },
+    "https://research.checkpoint.com/wp-content/uploads/2020/02/CheckPointResearchTurkishRat_blog_header.jpg": {
+     "bytes": 81995,
+     "height": 580,
+     "sha256": "6fa66e67cfcb5066768a6ec66770bf17759cd826a77701072e6a9d056130bb25",
+     "width": 1021
+    },
+    "https://research.checkpoint.com/wp-content/uploads/2026/03/Handala-void-1-scaled.png": {
+     "bytes": 107510,
+     "height": 466,
+     "sha256": "31aa06a4d8dc5015b50f4906c1890d5e9c8488a73de6070d70f42bc086ee82e4",
+     "width": 1100
+    },
+    "https://research.checkpoint.com/wp-content/uploads/2026/08/Figure2-PPTX-scaled.png": {
+     "bytes": 54723,
+     "height": 479,
+     "sha256": "ce85a0a9e267c7f4e7f01425301e7833d1a2429393685363e2015b3f04853760",
+     "width": 1100
+    },
+    "https://research.checkpoint.com/wp-content/uploads/2026/08/Talked_to_gmail.png": {
+     "bytes": 41776,
+     "height": 506,
+     "sha256": "b78049d65bb3b6b0a08947aaa7e168bbb6d5dfbaa8b0c80d5da05b1c9a955ba3",
+     "width": 806
+    },
+    "https://research.checkpoint.com/wp-content/uploads/2026/08/chatgpt_plugins.png": {
+     "bytes": 34979,
+     "height": 514,
+     "sha256": "48e767bd6f42d9a1fddf058c6c73eed4f40a9a6d13ed01da28da7c61ef0a87bd",
+     "width": 798
+    },
+    "https://research.checkpoint.com/wp-content/uploads/2026/08/cover-1.png": {
+     "bytes": 73744,
+     "height": 619,
+     "sha256": "aa3386e81832a2b2008e4a379e8858cc7643bc3abc2cf7256549cd811e725604",
+     "width": 1100
+    },
+    "https://research.checkpoint.com/wp-content/uploads/2026/08/high-level.png": {
+     "bytes": 38207,
+     "height": 400,
+     "sha256": "805d62025e03ded1754ad87ad35651850e31821186f57f25f9ff478f1ab9c31e",
+     "width": 1100
+    },
+    "https://research.checkpoint.com/wp-content/uploads/2026/08/low_risk_actions.png": {
+     "bytes": 22683,
+     "height": 415,
+     "sha256": "ffee656f9c79085d123a26f88f62a9f1f90801e7446402e8472b3e3625948c0d",
+     "width": 493
+    },
+    "https://research.checkpoint.com/wp-content/uploads/2026/08/изображение.png": {
+     "reason": "empty response"
+    }
+   },
+   "kind": "article",
+   "language": "en",
+   "licence": "unknown",
+   "published": "2026-09-08",
+   "publisher": "Check Point Research",
+   "raw_sha256": "b5b1c79269349bd25eb8723edcaf5c0f9adfce42c4e77e246276efe0ff907a68",
+   "slug": "2026-check-point-research-shared-clipboard-inside-sandbox-cross-account-chatgpt",
+   "spellings": [
+    "https://research.checkpoint.com/2026/the-shared-clipboard-inside-the-sandbox-cross-account-data-leakage-in-chatgpt/"
+   ],
+   "steps": {
+    "acquire": {
+     "content_sha256": "3835386ce671e8cb0a0524fb2eb6b597e9dd04d28d8064676d24ad3bd9daabf8",
+     "extraction": {
+      "candidates": [
+       {
+        "chars": 16533,
+        "code_blocks": 0,
+        "headings": 11,
+        "images": 10,
+        "links": 10,
+        "name": "recall",
+        "tables": 0,
+        "words": 2210
+       },
+       {
+        "chars": 16637,
+        "code_blocks": 0,
+        "headings": 11,
+        "images": 10,
+        "links": 10,
+        "name": "raw",
+        "tables": 0,
+        "words": 2225
+       }
+      ],
+      "chosen": "raw",
+      "why": "raw kept the most code blocks and text"
+     },
+     "raw_sha256": "b5b1c79269349bd25eb8723edcaf5c0f9adfce42c4e77e246276efe0ff907a68",
+     "reason": "",
+     "result": "stored",
+     "slug": "2026-check-point-research-shared-clipboard-inside-sandbox-cross-account-chatgpt",
+     "utc": "2026-10-12T11:41:06+00:00"
+    },
+    "attribution": {
+     "authors": [
+      "Alexey Bukhteyev"
+     ],
+     "publisher": "Check Point Research",
+     "reason": "maintainer-stated attribution from overrides.json",
+     "result": "applied",
+     "utc": "2026-10-12T11:22:57+00:00"
+    },
+    "check": {
+     "evidence": "http 200",
+     "final_url": "https://research.checkpoint.com/2026/the-shared-clipboard-inside-the-sandbox-cross-account-data-leakage-in-chatgpt/",
+     "http": 200,
+     "kind": "article",
+     "redirect_chain": [],
+     "snapshot": "",
+     "source": "probe",
+     "status": "ok",
+     "text_length": 19051,
+     "title": "The Shared Clipboard Inside the Sandbox: Cross-Account Data Leakage in ChatGPT - Check Point Research",
+     "utc": "2026-10-12T11:17:40+00:00"
+    },
+    "images": {
+     "bytes": 1140284,
+     "reason": "9 of 10 image(s) preserved",
+     "result": "stored",
+     "utc": "2026-10-12T11:45:20+00:00"
+    },
+    "pdf": {
+     "bytes": 717864,
+     "file": "archived-references/pdf/2026-ai/2026-check-point-research-shared-clipboard-inside-sandbox-cross-account-chatgpt.pdf",
+     "renderer": 4,
+     "result": "rendered",
+     "source": "markdown",
+     "utc": "2026-10-12T11:47:07+00:00"
+    },
+    "render": {
+     "chars": 19738,
+     "depth": "full",
+     "file": "archived-references/md/2026-ai/2026-check-point-research-shared-clipboard-inside-sandbox-cross-account-chatgpt.md",
+     "result": "ok",
+     "translation_file": "",
+     "utc": "2026-10-12T11:41:08+00:00"
+    }
+   },
+   "title": "The Shared Clipboard Inside the Sandbox: Cross-Account Data Leakage in ChatGPT"
   },
   "https://research.checkpoint.com/2026/when-agentic-glue-melts": {
    "also_at": [],
@@ -378377,6 +378893,158 @@
     }
    },
    "title": "Wisec - The WIse SECurity"
+  },
+  "https://wiz.io/blog/artifactory-under-attack-in-the-wild-exploitation-of-cve-2026-42016-cve-2026-4201": {
+   "also_at": [],
+   "authors": [
+    "Shahar Dorfman",
+    "Sean Johnstone",
+    "Zohar Kaplan",
+    "Kurt Giacchino"
+   ],
+   "cited_by": [
+    "2026-ai.md:349"
+   ],
+   "cited_title": "Artifactory Under Attack: In-the-Wild Exploitation of CVE-2026-42016, CVE-2026-42018 & CVE-2026-82329",
+   "content_gap": "",
+   "content_sha256": "d036c53258db7f0425fe438e54f3e20bd4aa05016d74b315b2d651ce9c4411b8",
+   "decision": {
+    "at": "2026-10-12",
+    "by": "rule:default",
+    "class": "research",
+    "outcome": "archive",
+    "reason": "carries technique"
+   },
+   "depth": "full",
+   "depth_reason": "default",
+   "digest": {
+    "at": "2026-10-12",
+    "by": "webseclist-review/1",
+    "of": "d036c53258db7f0425fe438e54f3e20bd4aa05016d74b315b2d651ce9c4411b8",
+    "tags": [
+     "auth-bypass",
+     "privilege-escalation",
+     "rce",
+     "credential-theft",
+     "persistence",
+     "command-and-control",
+     "malware",
+     "rest-api",
+     "attack-chain"
+    ],
+    "text": "The article documents attackers chaining an exposed Artifactory anonymous-user token with weak scope validation to mint an administrator token. It analyzes recovered Groovy implants that provide command execution, credential and signing-key theft, internal tunnelling, in-memory persistence and anti-forensics, then gives behavioural detection guidance."
+   },
+   "first_seen_utc": "2026-10-12T11:17:47+00:00",
+   "grade": "research",
+   "health": {
+    "evidence": "http 200",
+    "final_url": "https://www.wiz.io/blog/artifactory-under-attack-in-the-wild-exploitation-of-cve-2026-42016-cve-2026-4201",
+    "http": 200,
+    "redirect_chain": [],
+    "snapshot": "",
+    "source": "probe",
+    "status": "ok",
+    "text_length": 26370,
+    "title": "Artifactory Under Attack: In-the-Wild Exploitation of CVE-2026-42016, CVE-2026-42018 & CVE-2026-82329 | Wiz Blog"
+   },
+   "kind": "article",
+   "language": "en-us",
+   "licence": "unknown",
+   "published": "2026-09-10",
+   "publisher": "Wiz Research",
+   "raw_sha256": "1db182b3e4221b183d45950144dae979647bc79ac4159eb67e02554c70eaef55",
+   "slug": "2026-wiz-io-artifactory-under-attack-wild-exploitation-cve-2026-42016-cve-82329",
+   "spellings": [
+    "https://www.wiz.io/blog/artifactory-under-attack-in-the-wild-exploitation-of-cve-2026-42016-cve-2026-4201"
+   ],
+   "steps": {
+    "acquire": {
+     "content_sha256": "d036c53258db7f0425fe438e54f3e20bd4aa05016d74b315b2d651ce9c4411b8",
+     "extraction": {
+      "candidates": [
+       {
+        "chars": 25914,
+        "code_blocks": 6,
+        "headings": 0,
+        "images": 0,
+        "links": 11,
+        "name": "precision",
+        "tables": 47,
+        "words": 3421
+       },
+       {
+        "chars": 28468,
+        "code_blocks": 6,
+        "headings": 5,
+        "images": 0,
+        "links": 32,
+        "name": "recall",
+        "tables": 47,
+        "words": 3648
+       },
+       {
+        "chars": 28582,
+        "code_blocks": 6,
+        "headings": 5,
+        "images": 0,
+        "links": 32,
+        "name": "raw",
+        "tables": 47,
+        "words": 3661
+       }
+      ],
+      "chosen": "precision",
+      "why": "precision kept the code blocks and most of the text"
+     },
+     "raw_sha256": "1db182b3e4221b183d45950144dae979647bc79ac4159eb67e02554c70eaef55",
+     "reason": "",
+     "result": "stored",
+     "slug": "2026-wiz-io-artifactory-under-attack-wild-exploitation-cve-2026-42016-cve-82329",
+     "utc": "2026-10-12T11:41:49+00:00"
+    },
+    "attribution": {
+     "authors": [
+      "Shahar Dorfman",
+      "Sean Johnstone",
+      "Zohar Kaplan",
+      "Kurt Giacchino"
+     ],
+     "publisher": "Wiz Research",
+     "reason": "maintainer-stated attribution from overrides.json",
+     "result": "applied",
+     "utc": "2026-10-12T11:22:57+00:00"
+    },
+    "check": {
+     "evidence": "http 200",
+     "final_url": "https://www.wiz.io/blog/artifactory-under-attack-in-the-wild-exploitation-of-cve-2026-42016-cve-2026-4201",
+     "http": 200,
+     "kind": "article",
+     "redirect_chain": [],
+     "snapshot": "",
+     "source": "probe",
+     "status": "ok",
+     "text_length": 26370,
+     "title": "Artifactory Under Attack: In-the-Wild Exploitation of CVE-2026-42016, CVE-2026-42018 & CVE-2026-82329 | Wiz Blog",
+     "utc": "2026-10-12T11:17:55+00:00"
+    },
+    "pdf": {
+     "bytes": 244186,
+     "file": "archived-references/pdf/2026-ai/2026-wiz-io-artifactory-under-attack-wild-exploitation-cve-2026-42016-cve-82329.pdf",
+     "renderer": 4,
+     "result": "rendered",
+     "source": "markdown",
+     "utc": "2026-10-12T11:47:27+00:00"
+    },
+    "render": {
+     "chars": 29121,
+     "depth": "full",
+     "file": "archived-references/md/2026-ai/2026-wiz-io-artifactory-under-attack-wild-exploitation-cve-2026-42016-cve-82329.md",
+     "result": "ok",
+     "translation_file": "",
+     "utc": "2026-10-12T11:41:51+00:00"
+    }
+   },
+   "title": "Artifactory Under Attack: In-the-Wild Exploitation of CVE-2026-42016, CVE-2026-42018 & CVE-2026-82329"
   },
   "https://wiz.io/blog/azure-active-directory-bing-misconfiguration": {
    "also_at": [],

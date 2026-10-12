@@ -63,7 +63,7 @@ JSON.
 
 ## The vocabulary
 
-307 tags, across 2336 documents that carry a digest.
+307 tags, across 2340 documents that carry a digest.
 
 | Tag | Documents | OWASP |
 |---|---|---|
@@ -73,7 +73,7 @@ JSON.
 | `active-directory` | 1 | — |
 | `activex` | 13 | — |
 | `ai` | 10 | — |
-| `ai-agent` | 116 | — |
+| `ai-agent` | 117 | — |
 | `ai-assisted-research` | 3 | — |
 | `algorithmic-complexity` | 37 | A04:2021 |
 | `ambient-light-sensor` | 1 | — |
@@ -83,8 +83,8 @@ JSON.
 | `api-key` | 2 | — |
 | `argument-injection` | 5 | A03:2021 |
 | `aspnet` | 57 | — |
-| `attack-chain` | 311 | — |
-| `auth-bypass` | 411 | A01:2021 |
+| `attack-chain` | 313 | — |
+| `auth-bypass` | 414 | A01:2021 |
 | `autofill` | 5 | — |
 | `aws` | 46 | — |
 | `azure` | 19 | — |
@@ -118,16 +118,16 @@ JSON.
 | `code-audit` | 3 | — |
 | `code-coverage` | 1 | — |
 | `code-injection` | 13 | — |
-| `command-and-control` | 2 | — |
-| `command-injection` | 87 | A03:2021 |
+| `command-and-control` | 3 | — |
+| `command-injection` | 88 | A03:2021 |
 | `configuration` | 10 | — |
 | `content-type` | 46 | A05:2021 |
 | `cookie` | 161 | A07:2021 |
 | `corb` | 1 | — |
 | `cors` | 33 | A01:2021 |
 | `credential-exposure` | 6 | — |
-| `credential-theft` | 17 | — |
-| `cross-tenant` | 5 | — |
+| `credential-theft` | 19 | — |
+| `cross-tenant` | 6 | — |
 | `crypto` | 24 | A02:2021 |
 | `csp` | 82 | A05:2021 |
 | `csrf` | 170 | A01:2021 |
@@ -136,7 +136,7 @@ JSON.
 | `csti` | 6 | A03:2021 |
 | `cve` | 274 | — |
 | `data-breach` | 5 | — |
-| `data-exfiltration` | 20 | — |
+| `data-exfiltration` | 21 | — |
 | `database` | 80 | — |
 | `deanonymization` | 29 | — |
 | `deep-link` | 2 | — |
@@ -146,7 +146,7 @@ JSON.
 | `deserialization` | 107 | A08:2021 |
 | `desktop-app` | 14 | — |
 | `desync` | 44 | — |
-| `detection` | 152 | A09:2021 |
+| `detection` | 153 | A09:2021 |
 | `differential-fuzzing` | 1 | — |
 | `django` | 11 | — |
 | `dns` | 100 | — |
@@ -215,7 +215,7 @@ JSON.
 | `integer-underflow` | 3 | — |
 | `ios` | 19 | — |
 | `jailbreak` | 4 | — |
-| `java` | 135 | — |
+| `java` | 137 | — |
 | `javascript` | 434 | — |
 | `javascript-bridge` | 3 | — |
 | `javascript-runtime` | 23 | — |
@@ -235,7 +235,7 @@ JSON.
 | `llvm` | 2 | — |
 | `load-balancer` | 19 | — |
 | `localhost` | 15 | — |
-| `malware` | 2 | — |
+| `malware` | 3 | — |
 | `mass-assignment` | 12 | A01:2021 |
 | `mcp` | 9 | — |
 | `measurement-study` | 268 | — |
@@ -263,12 +263,12 @@ JSON.
 | `parser-differential` | 244 | — |
 | `passkeys` | 13 | A07:2021 |
 | `password-manager` | 5 | — |
-| `patch-bypass` | 4 | — |
+| `patch-bypass` | 5 | — |
 | `patch-diffing` | 4 | — |
-| `path-traversal` | 94 | A01:2021 |
+| `path-traversal` | 95 | A01:2021 |
 | `pdf` | 36 | — |
 | `perl` | 4 | — |
-| `persistence` | 3 | — |
+| `persistence` | 4 | — |
 | `phishing` | 60 | A04:2021 |
 | `php` | 145 | — |
 | `policy-bypass` | 3 | — |
@@ -278,9 +278,9 @@ JSON.
 | `predictable-token` | 10 | A02:2021 |
 | `prior-art-extension` | 61 | — |
 | `privacy` | 18 | — |
-| `privilege-escalation` | 141 | A01:2021 |
+| `privilege-escalation` | 142 | A01:2021 |
 | `prng` | 3 | — |
-| `prompt-injection` | 76 | A03:2021 |
+| `prompt-injection` | 77 | A03:2021 |
 | `prototype-pollution` | 36 | A08:2021 |
 | `proxy` | 103 | — |
 | `python` | 48 | — |
@@ -288,7 +288,7 @@ JSON.
 | `rag` | 5 | — |
 | `rails` | 18 | — |
 | `rbac` | 1 | — |
-| `rce` | 434 | — |
+| `rce` | 436 | — |
 | `react` | 7 | — |
 | `redirect` | 6 | — |
 | `redis` | 6 | — |
@@ -297,7 +297,7 @@ JSON.
 | `relay-attack` | 3 | — |
 | `request-smuggling` | 63 | — |
 | `response-splitting` | 20 | A03:2021 |
-| `rest-api` | 57 | — |
+| `rest-api` | 58 | — |
 | `reverse-engineering` | 3 | — |
 | `reverse-proxy` | 68 | — |
 | `ruby` | 42 | — |
@@ -315,7 +315,7 @@ JSON.
 | `session-cookie` | 8 | — |
 | `session-fixation` | 43 | A07:2021 |
 | `sharepoint` | 1 | — |
-| `side-channel` | 237 | — |
+| `side-channel` | 238 | — |
 | `smb` | 2 | — |
 | `smtp` | 20 | — |
 | `smuggling` | 15 | — |
@@ -341,7 +341,7 @@ JSON.
 | `toctou` | 18 | A04:2021 |
 | `token-theft` | 5 | — |
 | `tool-use` | 3 | — |
-| `tooling` | 393 | — |
+| `tooling` | 394 | — |
 | `trust-boundary` | 12 | — |
 | `type-confusion` | 4 | — |
 | `typosquatting` | 13 | A06:2021 |
